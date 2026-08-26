@@ -1,8 +1,7 @@
 .venv/
-
+__pycache__/
+.pytest_cache
+*.pyc
 idea.txt
 .env
-
-# Python cache
-__pycache__/
-*.pyc
+task.md

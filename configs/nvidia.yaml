@@ -1,0 +1,4 @@
+provider: nvidia
+model: nvidia/nemotron-3-super-120b-a12b
+temperature: 0
+api_key_env: NVIDIA_API_KEY
