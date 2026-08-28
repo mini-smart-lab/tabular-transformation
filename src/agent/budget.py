@@ -7,7 +7,7 @@ from typing import Literal
 from src.config import AgentBudgetConfig
 
 
-BudgetReason = Literal["tokens", "tool_calls", "execution_time", "wall_time"]
+BudgetReason = Literal["tokens", "tool_calls", "execution_time", "cpu_time", "wall_time"]
 
 
 @dataclass(frozen=True)
@@ -25,6 +25,7 @@ class BudgetManager:
         self.output_tokens = 0
         self.tool_calls = 0
         self.execution_time_seconds = 0.0
+        self.cpu_time_seconds = 0.0
 
     @property
     def total_tokens(self) -> int:
@@ -44,6 +45,9 @@ class BudgetManager:
     def record_execution_time(self, seconds: float) -> None:
         self.execution_time_seconds += max(0.0, seconds)
 
+    def record_cpu_time(self, seconds: float) -> None:
+        self.cpu_time_seconds += max(0.0, seconds)
+
     def check(self) -> BudgetStatus:
         checks: list[tuple[bool, BudgetReason]] = [
             (self.total_tokens >= self.config.max_total_tokens, "tokens"),
@@ -52,6 +56,7 @@ class BudgetManager:
                 self.execution_time_seconds >= self.config.max_total_execution_seconds,
                 "execution_time",
             ),
+            (self.cpu_time_seconds >= self.config.max_total_cpu_seconds, "cpu_time"),
             (self.wall_time_seconds >= self.config.max_wall_time_seconds, "wall_time"),
         ]
         for exhausted, reason in checks:
@@ -69,5 +74,6 @@ class BudgetManager:
             "total_tokens": self.total_tokens,
             "tool_calls": self.tool_calls,
             "execution_time_seconds": self.execution_time_seconds,
+            "cpu_time_seconds": self.cpu_time_seconds,
             "wall_time_seconds": self.wall_time_seconds,
         }

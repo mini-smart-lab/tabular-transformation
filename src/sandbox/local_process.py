@@ -34,7 +34,9 @@ class LocalProcessSandbox:
     def execute(self, code: str) -> ExecutionResult:
         workspace = self._require_workspace()
         program = workspace / "__execution__.py"
-        program.write_text(code, encoding="utf-8")
+        cpu_file = workspace / "__cpu_time__.txt"
+        cpu_file.unlink(missing_ok=True)
+        program.write_text(_instrument(code), encoding="utf-8")
         started = time.monotonic()
         # API keys and other host secrets are not inherited by generated code.
         child_env = {
@@ -58,6 +60,7 @@ class LocalProcessSandbox:
                 stdout=self._truncate(completed.stdout),
                 stderr=self._truncate(completed.stderr),
                 execution_time_seconds=elapsed,
+                cpu_time_seconds=_read_cpu_time(cpu_file),
             )
         except subprocess.TimeoutExpired as exc:
             return ExecutionResult(
@@ -65,6 +68,7 @@ class LocalProcessSandbox:
                 stdout=self._truncate(_to_text(exc.stdout)),
                 stderr=self._truncate(_to_text(exc.stderr) or "execution timed out"),
                 execution_time_seconds=time.monotonic() - started,
+                cpu_time_seconds=_read_cpu_time(cpu_file),
             )
 
     def read_file(self, relative_path: str) -> bytes:
@@ -99,3 +103,22 @@ def _to_text(value: str | bytes | None) -> str:
     if value is None:
         return ""
     return value.decode(errors="replace") if isinstance(value, bytes) else value
+
+
+def _instrument(code: str) -> str:
+    return (
+        "import time as _benchmark_time\n"
+        "_benchmark_cpu_start = _benchmark_time.process_time()\n"
+        "try:\n"
+        f"    exec(compile({code!r}, '<agent-code>', 'exec'), {{'__name__': '__main__'}})\n"
+        "finally:\n"
+        "    with open('__cpu_time__.txt', 'w', encoding='ascii') as _benchmark_handle:\n"
+        "        _benchmark_handle.write(str(_benchmark_time.process_time() - _benchmark_cpu_start))\n"
+    )
+
+
+def _read_cpu_time(path: Path) -> float:
+    try:
+        return max(0.0, float(path.read_text(encoding="ascii")))
+    except (OSError, ValueError):
+        return 0.0

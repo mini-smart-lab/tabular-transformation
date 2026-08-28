@@ -31,9 +31,11 @@ class EvaluationResult(ResultModel):
 
 
 class BenchmarkResult(ResultModel):
+    run_id: str
     task_id: str
     status: str
     termination_reason: str
     submission: FinalSubmission | None
     budget: dict[str, int | float]
     evaluation: EvaluationResult | None
+    transform_path: str | None = None

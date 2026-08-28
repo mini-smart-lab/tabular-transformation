@@ -54,7 +54,7 @@ def test_graph_run_run_submit(tmp_path):
     state = normalize_terminal_state(episode.invoke())
     assert state["status"] == "submitted"
     assert state["final_submission"].transformations[0].operators == ["square"]
-    assert state["tool_calls"] == 2
+    assert state["tool_calls"] == 3
     assert state["token_used"] == 36
     assert len(sandbox.executed_code) == 2
 

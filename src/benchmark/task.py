@@ -54,6 +54,10 @@ def load_task_directory(
         raise ValueError(f"config references unknown columns: {sorted(unknown)}")
     if (test_before_path is None) != (test_after_path is None):
         raise ValueError("test_before_path and test_after_path must be supplied together")
+    bundled_before = directory / "hidden" / "test_before.csv"
+    bundled_after = directory / "hidden" / "test_after.csv"
+    if test_before_path is None and bundled_before.is_file() and bundled_after.is_file():
+        test_before_path, test_after_path = bundled_before, bundled_after
     hidden_before = Path(test_before_path).resolve() if test_before_path is not None else None
     hidden_after = Path(test_after_path).resolve() if test_after_path is not None else None
     if hidden_before is not None and not hidden_before.is_file():

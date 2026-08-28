@@ -19,6 +19,7 @@ def register_provider(name: str, builder: ModelBuilder) -> None:
 
 def create_model(config: ModelConfig, *, env_file: str = ".env") -> Any:
     load_dotenv(env_file, override=False)
+    config = resolve_model_config(config)
     api_key = os.getenv(config.api_key_env)
     if not api_key:
         raise RuntimeError(f"missing API key environment variable: {config.api_key_env}")
@@ -29,14 +30,41 @@ def create_model(config: ModelConfig, *, env_file: str = ".env") -> Any:
     return builder(config, api_key)
 
 
+def resolve_model_config(config: ModelConfig) -> ModelConfig:
+    """Apply non-secret environment overrides and return the effective run metadata."""
+    load_dotenv(".env", override=False)
+    return config.model_copy(update={
+        "provider": os.getenv("BENCHMARK_MODEL_PROVIDER", config.provider),
+        "model": os.getenv("BENCHMARK_MODEL", config.model),
+        "api_key_env": os.getenv("BENCHMARK_API_KEY_ENV", config.api_key_env),
+    })
+
+
 def _build_nvidia(config: ModelConfig, api_key: str) -> Any:
     from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
-    return ChatNVIDIA(
+    kwargs = dict(
         model=config.model,
         temperature=config.temperature,
         api_key=api_key,
     )
+    if config.max_output_tokens is not None:
+        kwargs["max_tokens"] = config.max_output_tokens
+    return ChatNVIDIA(**kwargs)
+
+
+def _build_openai(config: ModelConfig, api_key: str) -> Any:
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise RuntimeError("provider 'openai' requires the optional langchain-openai package") from exc
+    return ChatOpenAI(
+        model=config.model,
+        temperature=config.temperature,
+        api_key=api_key,
+        max_tokens=config.max_output_tokens,
+    )
 
 
 register_provider("nvidia", _build_nvidia)
+register_provider("openai", _build_openai)

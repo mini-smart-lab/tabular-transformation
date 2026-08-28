@@ -57,6 +57,7 @@ class DiscoveryGraph:
             "token_used": 0,
             "tool_calls": 0,
             "execution_time_seconds": 0.0,
+            "cpu_time_seconds": 0.0,
             "started_at": self.budget.started_at,
             "final_submission": None,
             "status": "running",
@@ -85,6 +86,8 @@ class DiscoveryGraph:
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             cumulative_tokens=snapshot["total_tokens"],
+            response_content=response.content,
+            tool_calls=getattr(response, "tool_calls", []),
         )
         return {
             "messages": [response],
@@ -99,8 +102,9 @@ class DiscoveryGraph:
         reason = ""
         for call in getattr(message, "tool_calls", []):
             name = call.get("name", "")
+            self.budget.record_tool_call()
             try:
-                if name == "run_python" and self.budget.check().exhausted:
+                if name == "run_python" and self.budget.tool_calls > self.budget.config.max_tool_calls:
                     result: Any = {"status": "error", "stderr": "budget exhausted"}
                 elif name not in self.tools.by_name:
                     result = {"status": "error", "stderr": f"unknown tool: {name}"}
@@ -152,6 +156,7 @@ class DiscoveryGraph:
             "token_used": self.budget.total_tokens,
             "tool_calls": self.budget.tool_calls,
             "execution_time_seconds": self.budget.execution_time_seconds,
+            "cpu_time_seconds": self.budget.cpu_time_seconds,
         }
 
     def _budget_update(self, reason: str | None) -> dict[str, Any]:

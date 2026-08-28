@@ -5,3 +5,7 @@ __pycache__/
 idea.txt
 .env
 task.md
+artifacts/
+results/
+logs/
+pipeline_runs/

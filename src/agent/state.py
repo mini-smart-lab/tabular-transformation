@@ -16,6 +16,7 @@ class AgentState(TypedDict):
     token_used: int
     tool_calls: int
     execution_time_seconds: float
+    cpu_time_seconds: float
     started_at: float
     final_submission: FinalSubmission | None
     status: Literal["running", "submitted", "budget_exceeded", "failed"]

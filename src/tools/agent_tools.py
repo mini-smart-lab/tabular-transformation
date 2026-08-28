@@ -53,9 +53,9 @@ class AgentTools:
     def run_python(self, code: str) -> dict[str, Any]:
         if not self.budget.can_run_python():
             return {"status": "error", "stderr": "budget exhausted; execution denied"}
-        self.budget.record_tool_call()
         result = self.sandbox.execute(code)
         self.budget.record_execution_time(result.execution_time_seconds)
+        self.budget.record_cpu_time(result.cpu_time_seconds)
         payload = result.model_dump()
         # Enforce truncation even when a third-party Sandbox implementation forgets it.
         for stream in ("stdout", "stderr"):

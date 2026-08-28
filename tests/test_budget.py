@@ -26,6 +26,7 @@ def test_each_hard_limit_triggers():
         ("tokens", lambda b: b.record_llm_usage(5, 0)),
         ("tool_calls", lambda b: b.record_tool_call()),
         ("execution_time", lambda b: b.record_execution_time(5)),
+        ("cpu_time", lambda b: b.record_cpu_time(5)),
     ]
     for reason, action in cases:
         manager = BudgetManager(
@@ -34,6 +35,7 @@ def test_each_hard_limit_triggers():
                 max_tool_calls=1,
                 max_total_execution_seconds=5,
                 max_wall_time_seconds=5,
+                max_total_cpu_seconds=5,
             ),
             clock=clock,
         )

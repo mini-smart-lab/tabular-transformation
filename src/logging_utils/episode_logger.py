@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from threading import Lock
 from typing import Any
@@ -16,7 +17,7 @@ class EpisodeLogger:
             path.parent.mkdir(parents=True, exist_ok=True)
 
     def record(self, event: str, **payload: Any) -> None:
-        entry = {"event": event, **payload}
+        entry = {"timestamp": datetime.now(timezone.utc).isoformat(), "event": event, **payload}
         self.logger.info("benchmark event", extra={"benchmark_event": entry})
         if self.path is not None:
             line = json.dumps(entry, ensure_ascii=False, default=str)

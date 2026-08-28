@@ -10,3 +10,4 @@ class ExecutionResult(BaseModel):
     stdout: str = ""
     stderr: str = ""
     execution_time_seconds: float = Field(default=0.0, ge=0)
+    cpu_time_seconds: float = Field(default=0.0, ge=0)

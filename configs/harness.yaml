@@ -1,0 +1,22 @@
+budget:
+  max_total_tokens: 16000
+  max_tool_calls: 20
+  max_total_execution_seconds: 60
+  max_total_cpu_seconds: 60
+  max_wall_time_seconds: 120
+sandbox:
+  backend: local
+  execution_timeout_seconds: 10
+  max_output_chars: 8192
+  docker_image: tabular-benchmark-sandbox:latest
+  docker_network: none
+  docker_cpus: 1
+  docker_memory: 1g
+  docker_pids_limit: 64
+benchmark:
+  numeric_atol: 1.0e-6
+  numeric_rtol: 1.0e-5
+operator_vocabulary:
+  - LogTransformation
+  - SquareRootTransformation
+  - SquareTransformation
