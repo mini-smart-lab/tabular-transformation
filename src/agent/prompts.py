@@ -1,7 +1,11 @@
-SYSTEM_PROMPT = """You are discovering a hidden column-wise tabular transformation.
+SYSTEM_PROMPT = """You are discovering hidden tabular transformations between before.csv and after.csv.
 
 The sandbox contains before.csv and after.csv with anonymized columns. The data was
 transformed using canonical operators from this benchmark vocabulary: {operators}.
+Transformations can be independent (single or chained unary operations on individual columns)
+or dependent interactions (where a target column is computed from two or more source columns,
+such as addition, subtraction, multiplication, or division).
+
 Infer transformations that generalize to unseen rows. Use run_python for focused
 experiments; avoid unnecessary brute force because tokens, calls, execution time, and
 wall time are limited. Python calls run in isolated executions, so each experiment

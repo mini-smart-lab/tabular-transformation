@@ -18,6 +18,7 @@ def aggregate_results(result_directory: Path | str, output_csv: Path | str) -> p
             "run_id": result.get("run_id"), "task_id": result.get("task_id"),
             "status": result.get("status"), "termination_reason": result.get("termination_reason"),
             "functional_column_accuracy": evaluation.get("functional_column_accuracy"),
+            "transformed_column_accuracy": evaluation.get("transformed_column_accuracy"),
             "operator_precision": operators.get("precision"),
             "operator_recall": operators.get("recall"), "operator_f1": operators.get("f1"),
             "exact_sequence_accuracy": operators.get("exact_sequence_accuracy"),

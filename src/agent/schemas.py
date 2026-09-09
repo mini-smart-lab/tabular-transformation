@@ -19,6 +19,8 @@ class Transformation(BaseModel):
 
     column: str = Field(min_length=1)
     operators: list[str]
+    source_columns: list[str] | None = None
+    interaction: str | None = None
 
     @field_validator("operators")
     @classmethod

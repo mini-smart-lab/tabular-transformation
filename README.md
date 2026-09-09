@@ -7,6 +7,9 @@ Research harness hai tầng để đo khả năng LLM khám phá quy luật bi�
 
 Harness áp hard budget ở controller cho input/output token, tổng tool call, execution wall time, CPU time và toàn episode wall time. Mỗi run sinh trajectory JSONL, `transform.py` độc lập và result JSON phù hợp để tổng hợp số liệu nghiên cứu.
 
+> [!NOTE]
+> Tài liệu chi tiết về kiến trúc hệ thống, quy trình thực thi, sandbox và công thức metric xem tại: [docs/harness_architecture.md](docs/harness_architecture.md).
+
 ## Cài đặt
 
 ```powershell
@@ -104,19 +107,34 @@ Chạy tuần tự toàn bộ task con và tự tạo summary:
   --harness-config configs\harness.yaml
 ```
 
-## Sinh task atomic hợp lệ
+## Sinh task theo cấp độ khó (Difficulty Levels)
 
-Builder chỉ nhận dữ liệu numeric, split train/hidden theo seed, rồi chọn trong các cặp cột–operator đã qua kiểm tra applicability trên toàn nguồn. Vì vậy `LogTransformation` không được áp vào giá trị `<= 0`, `SquareRootTransformation` không áp vào giá trị âm, và mọi output NaN/inf đều bị loại.
+Harness hỗ trợ sinh task đa tầng theo 5 cấp độ khó (Level 1 → Level 5):
+- **Level 1**: 2 phép biến đổi độc lập trên 2 cột riêng biệt.
+- **Level 2**: 3 phép biến đổi độc lập / có lồng nhau (chained operations).
+- **Level 3**: 4 phép biến đổi độc lập + 1 phép biến đổi phụ thuộc đa cột ($C = A \text{ op } B$).
+- **Level 4**: 5 phép biến đổi độc lập + 2 phép biến đổi phụ thuộc.
+- **Level 5**: 6 phép biến đổi độc lập + 3 phép biến đổi phụ thuộc.
+
+Tập phép biến đổi hỗ trợ phong phú gồm:
+- **Đơn biến & Phi tuyến:** `LogTransformation`, `Log1pTransformation`, `SquareRootTransformation`, `SquareTransformation`, `CubeTransformation`, `CubeRootTransformation`, `ExpTransformation`, `InverseTransformation`, `AbsTransformation`.
+- **Chuẩn hóa:** `StandardScalerTransformation`, `MinMaxScalerTransformation`.
+- **Lượng giác & Kích hoạt:** `SinTransformation`, `CosTransformation`, `TanhTransformation`, `SigmoidTransformation`.
+- **Tương tác đa cột (Inter-column):** `AddInteractionTransformation` ($A + B$), `SubtractInteractionTransformation` ($A - B$), `MultiplyInteractionTransformation` ($A \times B$), `DivideInteractionTransformation` ($A / B$).
+
+Sinh task qua CLI `run_pipeline.py` hoặc `task_builder`:
 
 ```powershell
+# Chạy pipeline với Level 3
+.venv\Scripts\python.exe run_pipeline.py --level 3 --task-count 24
+
+# Hoặc chỉ sinh task kiểm tra trước
 .venv\Scripts\python.exe -m src.benchmark.task_builder `
   --source notebooks\processed_data.csv `
   --output generated_tasks\0 `
-  --seed 42 `
-  --operators LogTransformation SquareRootTransformation SquareTransformation
+  --level 3 `
+  --seed 42
 ```
-
-Khi thêm operator mới, đăng ký class trong `OPERATORS` của `src/benchmark/task_builder.py` và implement `is_applicable`; implementation mặc định cũng từ chối exception hoặc output không hữu hạn.
 
 ## Sandbox
 

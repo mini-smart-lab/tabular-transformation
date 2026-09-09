@@ -6,11 +6,75 @@ from src.agent.schemas import Transformation
 from src.benchmark.result import OperatorMetrics
 
 
+_OPERATOR_ALIASES: dict[str, str] = {
+    "log": "LogTransformation",
+    "logtransformation": "LogTransformation",
+    "np.log": "LogTransformation",
+    "log1p": "Log1pTransformation",
+    "log1ptransformation": "Log1pTransformation",
+    "np.log1p": "Log1pTransformation",
+    "sqrt": "SquareRootTransformation",
+    "squareroot": "SquareRootTransformation",
+    "squareroottransformation": "SquareRootTransformation",
+    "np.sqrt": "SquareRootTransformation",
+    "square": "SquareTransformation",
+    "squaretransformation": "SquareTransformation",
+    "cube": "CubeTransformation",
+    "cubetransformation": "CubeTransformation",
+    "cbrt": "CubeRootTransformation",
+    "cuberoottransformation": "CubeRootTransformation",
+    "np.cbrt": "CubeRootTransformation",
+    "exp": "ExpTransformation",
+    "exptransformation": "ExpTransformation",
+    "np.exp": "ExpTransformation",
+    "inv": "InverseTransformation",
+    "inverse": "InverseTransformation",
+    "inversetransformation": "InverseTransformation",
+    "standard_scaler": "StandardScalerTransformation",
+    "standardscaler": "StandardScalerTransformation",
+    "standardscalertransformation": "StandardScalerTransformation",
+    "min_max_scaler": "MinMaxScalerTransformation",
+    "minmaxscaler": "MinMaxScalerTransformation",
+    "minmaxscalertransformation": "MinMaxScalerTransformation",
+    "sin": "SinTransformation",
+    "sintransformation": "SinTransformation",
+    "np.sin": "SinTransformation",
+    "cos": "CosTransformation",
+    "costransformation": "CosTransformation",
+    "np.cos": "CosTransformation",
+    "tanh": "TanhTransformation",
+    "tanhtransformation": "TanhTransformation",
+    "np.tanh": "TanhTransformation",
+    "sigmoid": "SigmoidTransformation",
+    "sigmoidtransformation": "SigmoidTransformation",
+    "abs": "AbsTransformation",
+    "abstransformation": "AbsTransformation",
+    "np.abs": "AbsTransformation",
+    "add": "AddInteractionTransformation",
+    "addinteraction": "AddInteractionTransformation",
+    "addinteractiontransformation": "AddInteractionTransformation",
+    "subtract": "SubtractInteractionTransformation",
+    "subtractinteraction": "SubtractInteractionTransformation",
+    "subtractinteractiontransformation": "SubtractInteractionTransformation",
+    "multiply": "MultiplyInteractionTransformation",
+    "multiplyinteraction": "MultiplyInteractionTransformation",
+    "multiplyinteractiontransformation": "MultiplyInteractionTransformation",
+    "divide": "DivideInteractionTransformation",
+    "divideinteraction": "DivideInteractionTransformation",
+    "divideinteractiontransformation": "DivideInteractionTransformation",
+}
+
+
+def canonicalize_operator(op: str) -> str:
+    cleaned = op.strip()
+    return _OPERATOR_ALIASES.get(cleaned.lower(), _OPERATOR_ALIASES.get(cleaned, cleaned))
+
+
 def compute_operator_metrics(
     predicted: list[Transformation], ground_truth: list[Transformation]
 ) -> OperatorMetrics:
-    pred_map = {item.column: item.operators for item in predicted}
-    truth_map = {item.column: item.operators for item in ground_truth}
+    pred_map = {item.column: [canonicalize_operator(op) for op in item.operators] for item in predicted}
+    truth_map = {item.column: [canonicalize_operator(op) for op in item.operators] for item in ground_truth}
 
     true_positive = 0
     predicted_total = 0

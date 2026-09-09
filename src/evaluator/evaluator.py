@@ -47,17 +47,24 @@ class Evaluator:
             try:
                 predicted = pd.read_csv(_bytes_path_adapter(sandbox.read_file("predicted.csv")))
                 target = pd.read_csv(task.test_after_path)
-                columns, accuracy = compare_columns(
+                transformed_cols = {t.column for t in task.ground_truth_transformations}
+                columns, accuracy, trans_accuracy = compare_columns(
                     predicted, target,
+                    transformed_columns=transformed_cols,
                     atol=self.config.numeric_atol, rtol=self.config.numeric_rtol,
                 )
             except Exception as exc:
                 return EvaluationResult(
-                    functional_column_accuracy=0.0, columns=[], operator_metrics=metrics,
-                    execution_status="error", error=f"invalid evaluator output: {exc}",
+                    functional_column_accuracy=0.0,
+                    transformed_column_accuracy=0.0,
+                    columns=[],
+                    operator_metrics=metrics,
+                    execution_status="error",
+                    error=f"invalid evaluator output: {exc}",
                 )
             return EvaluationResult(
                 functional_column_accuracy=accuracy,
+                transformed_column_accuracy=trans_accuracy,
                 columns=columns,
                 operator_metrics=metrics,
                 execution_status="success",

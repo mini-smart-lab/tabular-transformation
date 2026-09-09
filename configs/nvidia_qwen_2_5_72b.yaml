@@ -1,0 +1,4 @@
+provider: nvidia
+model: qwen/qwen2.5-72b-instruct
+temperature: 0
+api_key_env: NVIDIA_API_KEY

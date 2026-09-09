@@ -12,6 +12,7 @@ class ResultModel(BaseModel):
 class ColumnResult(ResultModel):
     column: str
     correct: bool
+    is_transformed: bool = False
     error: str | None = None
 
 
@@ -24,6 +25,7 @@ class OperatorMetrics(ResultModel):
 
 class EvaluationResult(ResultModel):
     functional_column_accuracy: float
+    transformed_column_accuracy: float | None = None
     columns: list[ColumnResult]
     operator_metrics: OperatorMetrics
     execution_status: str

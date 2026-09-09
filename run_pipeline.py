@@ -17,7 +17,7 @@ import yaml
 
 from src.benchmark.aggregate import aggregate_results
 from src.benchmark.runner import BenchmarkRunner
-from src.benchmark.task_builder import OPERATORS, build_atomic_task
+from src.benchmark.task_builder import ALL_OPERATORS, build_task
 from src.config import HarnessConfig, ModelConfig
 from src.model_factory import create_model, resolve_model_config
 from src.sandbox.docker import DockerSandbox
@@ -43,6 +43,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--run-name", help="Stable run name; default is a UTC timestamp")
     parser.add_argument("--task-count", type=int, default=24)
+    parser.add_argument(
+        "--level", type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
+        help="Difficulty level (0=atomic, 1=2 indep, 2=3 indep/chained, 3=4 indep+1 interaction, 4=5 indep+2 inter, 5=6 indep+3 inter; default: 1)",
+    )
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--train-fraction", type=float, default=0.7)
     parser.add_argument(
@@ -50,7 +54,7 @@ def parse_args() -> argparse.Namespace:
         help="Deterministically sample this many source rows per task; 0 uses all rows",
     )
     parser.add_argument(
-        "--operators", nargs="+", choices=sorted(OPERATORS), default=sorted(OPERATORS)
+        "--operators", nargs="+", choices=sorted(ALL_OPERATORS), default=sorted(ALL_OPERATORS)
     )
     parser.add_argument(
         "--prepare-only", action="store_true",
@@ -97,16 +101,19 @@ def main() -> int:
             task_frame = source_frame.sample(
                 n=args.rows_per_task, random_state=args.seed + index, replace=False
             ).reset_index(drop=True)
-        column, operator = build_atomic_task(
+        transforms = build_task(
             task_frame,
             task_directory,
+            level=args.level,
             seed=args.seed + index,
             train_fraction=args.train_fraction,
             operator_names=args.operators,
         )
         generated.append({
-            "task_id": str(index), "seed": args.seed + index,
-            "column": column, "operator": operator,
+            "task_id": str(index),
+            "seed": args.seed + index,
+            "level": args.level,
+            "transformations": transforms,
         })
 
     model_config = ModelConfig.model_validate(
@@ -123,6 +130,7 @@ def main() -> int:
         "source_rows": len(source_frame),
         "source_columns": list(source_frame.columns),
         "task_count": args.task_count,
+        "level": args.level,
         "seed": args.seed,
         "train_fraction": args.train_fraction,
         "rows_per_task": min(args.rows_per_task or len(source_frame), len(source_frame)),
@@ -136,7 +144,7 @@ def main() -> int:
     manifest_path = run_directory / "manifest.json"
     _write_json(manifest_path, manifest)
 
-    print(f"Prepared {args.task_count} valid tasks in {paths['tasks']}")
+    print(f"Prepared {args.task_count} valid Level {args.level} tasks in {paths['tasks']}")
     if args.prepare_only:
         _write_preparation_report(paths["reports"] / "report.md", manifest)
         print(f"Manifest: {manifest_path}")
@@ -161,7 +169,7 @@ def main() -> int:
     results = []
     for index in range(args.task_count):
         task_directory = paths["tasks"] / str(index)
-        print(f"[{index + 1}/{args.task_count}] Running task {index}...")
+        print(f"[{index + 1}/{args.task_count}] Running task {index + 1}...")
         result = runner.run_directory(
             task_directory,
             model,
@@ -169,8 +177,13 @@ def main() -> int:
             provider_model=f"{model_config.provider}/{model_config.model}",
         )
         results.append(result)
+        trans_acc = (
+            result.evaluation.transformed_column_accuracy
+            if result.evaluation and result.evaluation.transformed_column_accuracy is not None
+            else (result.evaluation.functional_column_accuracy if result.evaluation else None)
+        )
         metric = (
-            f"accuracy={result.evaluation.functional_column_accuracy:.3f}"
+            f"trans_acc={trans_acc:.3f} (all={result.evaluation.functional_column_accuracy:.3f})"
             if result.evaluation else "no evaluation"
         )
         print(f"  {result.status}; {metric}; run_id={result.run_id}")
@@ -215,20 +228,52 @@ def _validate_source(frame: pd.DataFrame) -> None:
 def _build_report_data(
     manifest: dict[str, Any], summary: pd.DataFrame, elapsed_seconds: float
 ) -> dict[str, Any]:
-    evaluated = summary[summary["functional_column_accuracy"].notna()]
+    task_count = len(summary)
+    submitted_mask = summary["status"] == "submitted"
+    evaluated = summary[submitted_mask]
+
+    # 1. Benchmark scores across ALL tasks (Failed/Timeout tasks = 0.0)
+    has_trans = "transformed_column_accuracy" in summary.columns
+    trans_acc_series = summary["transformed_column_accuracy"] if has_trans else summary["functional_column_accuracy"]
+    all_trans_acc = float(trans_acc_series.fillna(0.0).mean()) if task_count else 0.0
+    all_func_acc = float(summary["functional_column_accuracy"].fillna(0.0).mean()) if task_count else 0.0
+    all_op_f1 = float(summary["operator_f1"].fillna(0.0).mean()) if task_count else 0.0
+    all_exact_seq = float(summary["exact_sequence_accuracy"].fillna(0.0).mean()) if task_count else 0.0
+
+    # 2. Conditional scores on SUBMITTED tasks only
+    submitted_trans_acc = _safe_mean(evaluated, "transformed_column_accuracy")
+    if submitted_trans_acc is None:
+        submitted_trans_acc = _safe_mean(evaluated, "functional_column_accuracy")
+
     return {
         "pipeline_run": manifest["pipeline_run"],
         "source": manifest["source"],
+        "level": manifest.get("level", 1),
         "model": manifest["model"],
         "sandbox_backend": manifest["harness"]["sandbox"]["backend"],
-        "task_count": int(len(summary)),
+        "task_count": task_count,
         "evaluated_task_count": int(len(evaluated)),
-        "submitted_task_count": int((summary["status"] == "submitted").sum()),
-        "mean_functional_column_accuracy": _safe_mean(evaluated, "functional_column_accuracy"),
+        "submitted_task_count": int(submitted_mask.sum()),
+        "submission_rate": float(submitted_mask.sum() / task_count) if task_count else 0.0,
+        # All-task benchmark metrics (penalized with 0.0 for failures)
+        "benchmark_transformed_accuracy": all_trans_acc,
+        "benchmark_functional_accuracy": all_func_acc,
+        "benchmark_operator_f1": all_op_f1,
+        "benchmark_exact_sequence_accuracy": all_exact_seq,
+        # Backward-compatible keys
+        "mean_transformed_column_accuracy": all_trans_acc,
+        "mean_functional_column_accuracy": all_func_acc,
         "mean_operator_precision": _safe_mean(evaluated, "operator_precision"),
         "mean_operator_recall": _safe_mean(evaluated, "operator_recall"),
-        "mean_operator_f1": _safe_mean(evaluated, "operator_f1"),
-        "mean_exact_sequence_accuracy": _safe_mean(evaluated, "exact_sequence_accuracy"),
+        "mean_operator_f1": all_op_f1,
+        "mean_exact_sequence_accuracy": all_exact_seq,
+        # Submitted-only metrics
+        "submitted_transformed_accuracy": submitted_trans_acc,
+        "submitted_functional_accuracy": _safe_mean(evaluated, "functional_column_accuracy"),
+        "submitted_operator_precision": _safe_mean(evaluated, "operator_precision"),
+        "submitted_operator_recall": _safe_mean(evaluated, "operator_recall"),
+        "submitted_operator_f1": _safe_mean(evaluated, "operator_f1"),
+        "submitted_exact_sequence_accuracy": _safe_mean(evaluated, "exact_sequence_accuracy"),
         "total_tokens": int(summary["total_tokens"].fillna(0).sum()),
         "total_tool_calls": int(summary["tool_calls"].fillna(0).sum()),
         "total_sandbox_cpu_seconds": float(summary["cpu_time_seconds"].fillna(0).sum()),
@@ -240,6 +285,8 @@ def _build_report_data(
 
 
 def _safe_mean(frame: pd.DataFrame, column: str) -> float | None:
+    if column not in frame.columns:
+        return None
     values = [float(value) for value in frame[column].dropna().tolist()]
     return mean(values) if values else None
 
@@ -247,6 +294,9 @@ def _safe_mean(frame: pd.DataFrame, column: str) -> float | None:
 def _render_markdown_report(report: dict[str, Any], summary: pd.DataFrame) -> str:
     def metric(value: Any) -> str:
         return "N/A" if value is None or pd.isna(value) else f"{float(value):.4f}"
+
+    def percent(value: Any) -> str:
+        return "N/A" if value is None or pd.isna(value) else f"{float(value) * 100:.2f}%"
 
     def integer(value: Any) -> int:
         return 0 if value is None or pd.isna(value) else int(value)
@@ -256,33 +306,53 @@ def _render_markdown_report(report: dict[str, Any], summary: pd.DataFrame) -> st
         "",
         f"- Pipeline run: `{report['pipeline_run']}`",
         f"- Source: `{report['source']}`",
+        f"- Level: {report.get('level', 1)}",
         f"- Model: `{report['model']['provider']}/{report['model']['model']}`",
         f"- Sandbox: `{report['sandbox_backend']}`",
-        f"- Tasks: {report['task_count']} ({report['evaluated_task_count']} evaluated)",
+        f"- Tasks: {report['task_count']} ({report['submitted_task_count']} submitted, {report['submission_rate'] * 100:.1f}% completion rate)",
         f"- Pipeline wall time: {report['pipeline_wall_seconds']:.2f} seconds",
         "",
-        "## Aggregate metrics",
+        "## Benchmark Scores (All Tasks — Failed Tasks Penalized with 0.0)",
         "",
-        "| Metric | Value |",
+        "| Primary Metric | Score | Note |",
+        "|---|---:|---|",
+        f"| **Benchmark Transformed Accuracy** | **{metric(report.get('benchmark_transformed_accuracy'))}** | *Target columns only, failed tasks = 0.0 (Primary Score)* |",
+        f"| **Benchmark Functional Accuracy** | {metric(report.get('benchmark_functional_accuracy'))} | *All columns, failed tasks = 0.0* |",
+        f"| **Benchmark Operator F1** | {metric(report.get('benchmark_operator_f1'))} | *Symbolic recovery, failed tasks = 0.0* |",
+        f"| **Benchmark Exact Sequence Acc** | {metric(report.get('benchmark_exact_sequence_accuracy'))} | *Exact chain match, failed tasks = 0.0* |",
+        f"| **Task Submission Rate** | {percent(report.get('submission_rate'))} | *{report['submitted_task_count']}/{report['task_count']} tasks completed within budget* |",
+        "",
+        "## Conditional Metrics (Submitted Tasks Only)",
+        "",
+        "| Conditional Metric | Value |",
         "|---|---:|",
-        f"| Functional column accuracy | {metric(report['mean_functional_column_accuracy'])} |",
-        f"| Operator precision | {metric(report['mean_operator_precision'])} |",
-        f"| Operator recall | {metric(report['mean_operator_recall'])} |",
-        f"| Operator F1 | {metric(report['mean_operator_f1'])} |",
-        f"| Exact operator sequence accuracy | {metric(report['mean_exact_sequence_accuracy'])} |",
+        f"| Transformed column accuracy | {metric(report.get('submitted_transformed_accuracy'))} |",
+        f"| Functional column accuracy (overall) | {metric(report.get('submitted_functional_accuracy'))} |",
+        f"| Operator precision | {metric(report.get('submitted_operator_precision'))} |",
+        f"| Operator recall | {metric(report.get('submitted_operator_recall'))} |",
+        f"| Operator F1 | {metric(report.get('submitted_operator_f1'))} |",
+        f"| Exact operator sequence accuracy | {metric(report.get('submitted_exact_sequence_accuracy'))} |",
         f"| Total tokens | {report['total_tokens']} |",
         f"| Total tool calls | {report['total_tool_calls']} |",
         f"| Sandbox CPU seconds | {report['total_sandbox_cpu_seconds']:.3f} |",
         "",
         "## Per-task results",
         "",
-        "| Task | Status | Functional accuracy | Operator F1 | Tokens | Tool calls |",
-        "|---|---|---:|---:|---:|---:|",
+        "| Task | Status | Transformed acc | Overall acc | Operator F1 | Tokens | Tool calls |",
+        "|---|---|---:|---:|---:|---:|---:|",
     ]
+    has_trans = "transformed_column_accuracy" in summary.columns
     for _, row in summary.sort_values("task_id").iterrows():
+        is_sub = row["status"] == "submitted"
+        trans_acc = row["transformed_column_accuracy"] if has_trans else row["functional_column_accuracy"]
+        trans_val = metric(trans_acc) if is_sub else "0.0000 (failed)"
+        overall_val = metric(row["functional_column_accuracy"]) if is_sub else "0.0000 (failed)"
+        f1_val = metric(row["operator_f1"]) if is_sub else "0.0000 (failed)"
         lines.append(
             f"| {row['task_id']} | {row['status']} | "
-            f"{metric(row['functional_column_accuracy'])} | {metric(row['operator_f1'])} | "
+            f"{trans_val} | "
+            f"{overall_val} | "
+            f"{f1_val} | "
             f"{integer(row['total_tokens'])} | {integer(row['tool_calls'])} |"
         )
     lines.extend([
@@ -296,10 +366,13 @@ def _render_markdown_report(report: dict[str, Any], summary: pd.DataFrame) -> st
 def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
     operator_counts: dict[str, int] = {}
     for task in manifest["tasks"]:
-        operator_counts[task["operator"]] = operator_counts.get(task["operator"], 0) + 1
+        for t in task.get("transformations", []):
+            for op in t.get("operators", []):
+                operator_counts[op] = operator_counts.get(op, 0) + 1
     lines = [
         "# Prepared Benchmark Dataset", "",
         f"- Source: `{manifest['source']}`",
+        f"- Level: {manifest.get('level', 1)}",
         f"- Rows: {manifest['source_rows']}",
         f"- Columns: {len(manifest['source_columns'])}",
         f"- Generated tasks: {manifest['task_count']}",

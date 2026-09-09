@@ -1,0 +1,4 @@
+provider: nvidia
+model: nvidia/llama-3.1-nemotron-70b-instruct
+temperature: 0
+api_key_env: NVIDIA_API_KEY
