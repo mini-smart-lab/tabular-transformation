@@ -40,32 +40,41 @@ flowchart TD
 ## 2. Các thành phần cốt lõi
 
 ### 2.1. Hệ thống Phép biến đổi (`transformation/`)
-Gồm 19 toán tử kế thừa từ lớp cơ sở [`Transformation`](../transformation/base.py), tích hợp hàm kiểm tra tính hợp lệ toán học `is_applicable` (chống tràn số, vô cùng, chia cho 0, log số âm):
+Gồm 24 toán tử kế thừa từ lớp cơ sở [`Transformation`](../transformation/base.py), tích hợp hàm kiểm tra tính hợp lệ toán học `is_applicable` (chống tràn số, vô cùng, chia cho 0, log số âm):
 - **Đơn biến & Phi tuyến:** `Log`, `Log1p`, `Square`, `SquareRoot`, `Cube`, `CubeRoot`, `Exp`, `Inverse`, `Abs`.
 - **Chuẩn hóa (Scaling):** `StandardScaler` (Z-Score), `MinMaxScaler`.
 - **Lượng giác & Kích hoạt:** `Sin`, `Cos`, `Tanh`, `Sigmoid`.
-- **Tương tác phụ thuộc đa cột (Inter-column):** `AddInteraction` ($A + B$), `SubtractInteraction` ($A - B$), `MultiplyInteraction` ($A \times B$), `DivideInteraction` ($A / B$).
+- **Phân mảnh & Điều kiện (Piecewise / Conditional):** `IndicatorZero` ($\mathbb{I}(x > 0)$), `IndicatorMean` ($\mathbb{I}(x > \text{mean}(x))$), `ClipZero` ($\max(x, 0)$ / ReLU), `PiecewiseLog` ($\log(x) \text{ if } x > 1 \text{ else } x$).
+- **Tương tác đa biến (Inter-column):** `AddInteraction` ($A + B$), `SubtractInteraction` ($A - B$), `MultiplyInteraction` ($A \times B$), `DivideInteraction` ($A / B$), `ConditionalInteraction` ($A \text{ if } A > \text{mean}(A) \text{ else } B$).
 
-### 2.2. Bộ sinh Task theo cấp độ khó (`src/benchmark/task_builder.py`)
-- **Level 1:** 2 phép biến đổi độc lập trên 2 cột riêng biệt.
-- **Level 2:** 3 phép biến đổi độc lập / có chuỗi lồng nhau (Chained: e.g. $\text{Log} \to \text{StandardScaler}$).
-- **Level 3:** 4 phép biến đổi độc lập + 1 tương tác phụ thuộc đa cột ($C = A \text{ op } B$).
-- **Level 4:** 5 phép biến đổi độc lập + 2 tương tác phụ thuộc đa cột.
-- **Level 5:** 6 phép biến đổi độc lập + 3 tương tác phụ thuộc đa cột.
+### 2.2. Bộ sinh Task theo cấp độ khó & Độ sâu cây cú pháp (`src/benchmark/task_builder.py`)
+- **Level 0 (Atomic):** 1 phép biến đổi đơn biến $f(x)$ ($d=1$).
+- **Level 1 (Atomic Unary):** 2 phép biến đổi đơn biến độc lập ($d=1$, không lồng ghép).
+- **Level 2 (Composed Unary):** 3 phép biến đổi lồng ghép $f(g(x))$ ($d=2$, bảo đảm lồng ghép chuỗi hàm).
+- **Level 3 (Interactions):** 3 cột độc lập + 1 tương tác đa biến ($x_1 \odot x_2$, $d=2$).
+- **Level 4 (Conditional / If-Else):** 3 cột độc lập (ưu tiên hàm phân mảnh/indicator) + 1 tương tác điều kiện phân mảnh.
+- **Level 5 (Hybrid Deep AST):** 4 cột độc lập (lồng ghép + conditional) + 2 tương tác đa biến với độ sâu $d \ge 3$ ($f(x_1 \odot x_2)$, v.v.).
 
 ### 2.3. Môi trường Sandbox (`src/sandbox/`)
 - **Nguyên tắc an toàn:** Không truyền API Key / Environment variables của host vào sandbox; làm sạch biến môi trường.
 - **`LocalProcessSandbox`:** Thực thi code qua subprocess độc lập, áp timeout và giới hạn độ dài stdout/stderr.
 - **`DockerSandbox`:** Khởi tạo container riêng biệt cho mỗi lượt chạy, cách ly network (`none`), giới hạn CPU (1 core) và RAM (1GB).
 
-### 2.4. Quản trị Ngân sách (`src/agent/budget.py`)
-Áp hard-budget tại controller nhằm đảm bảo tính công bằng và giới hạn tài nguyên:
-- `max_total_tokens`: Ngân sách token tích lũy tối đa trong 1 task.
-- `max_tool_calls`: Số lần gọi tool `run_python` tối đa.
-- `max_wall_time_seconds`: Thời gian tối đa cho 1 episode.
-- `max_total_execution_seconds` / `max_total_cpu_seconds`: Thời gian chạy code tối đa trong sandbox.
+### 2.4. Quản trị Ngân sách Thích ứng (Tiered Budget - `src/agent/budget.py`)
+Hệ thống tự động điều chỉnh ngân sách theo độ phức tạp của từng Level (có thể ghi đè bằng `--fixed-budget`):
+- **Level 0 - 1:** 40,000 tokens, 8 tool calls, timeout 15s, 30s CPU, 120s wall time.
+- **Level 2:** 60,000 tokens, 12 tool calls, timeout 15s, 60s CPU, 180s wall time.
+- **Level 3:** 80,000 tokens, 15 tool calls, timeout 15s, 60s CPU, 240s wall time.
+- **Level 4:** 100,000 tokens, 20 tool calls, timeout 15s, 90s CPU, 300s wall time.
+- **Level 5:** 120,000 tokens, 25 tool calls, timeout 15s, 120s CPU, 360s wall time.
 
-### 2.5. Hệ thống Đánh giá & Metric (`src/evaluator/`)
+### 2.5. Tính Tái lập Thí nghiệm (Reproducibility)
+- Tham số `--seed` (mặc định: `42`) được cố định cho cả:
+  1. Bộ sinh task và lấy mẫu dữ liệu ngẫu nhiên xác định.
+  2. Khởi tạo seed cho LLM client (OpenAI, NVIDIA endpoints).
+- Seed được tự động ghi nhận trong `manifest.json`, `report.json` và bảng báo cáo `report.md`.
+
+### 2.6. Hệ thống Đánh giá & Metric (`src/evaluator/`)
 Đánh giá song song 2 khía cạnh:
 1. **Black-box Functional Correctness (Chấm trên Test Set ẩn):**
    - **`Benchmark Transformed Accuracy` (Metric chính):** Độ chính xác trên tập các cột **thực sự bị biến đổi** (các task timeout/quá budget bị phạt điểm `0.0`).
@@ -85,7 +94,7 @@ Gồm 19 toán tử kế thừa từ lớp cơ sở [`Transformation`](../transf
 Mỗi lượt chạy sinh ra một thư mục cô lập gồm:
 ```text
 pipeline_runs/<timestamp>/
-├── manifest.json       # Metadata tái lập thí nghiệm (seed, dataset, model, config)
+├── manifest.json       # Metadata tái lập thí nghiệm (seed, dataset, model, config, task specs)
 ├── tasks/              # Các task đã sinh (train_before, train_after, hidden/test_*)
 ├── logs/               # Log chi tiết JSONL từng lượt gọi LLM, mã python và stdout
 ├── artifacts/          # Script transform(df) độc lập được agent nộp
@@ -93,5 +102,6 @@ pipeline_runs/<timestamp>/
 └── reports/
     ├── summary.csv     # Bảng tổng hợp phẳng toàn bộ các run
     ├── report.json     # Báo cáo dạng JSON cho máy đọc
-    └── report.md       # Báo cáo Markdown trực quan (Benchmark & Conditional scores)
+    └── report.md       # Báo cáo Markdown trực quan (Metadata, Seed, Benchmark & Conditional scores)
 ```
+

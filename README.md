@@ -109,24 +109,28 @@ Chạy tuần tự toàn bộ task con và tự tạo summary:
 
 ## Sinh task theo cấp độ khó (Difficulty Levels)
 
-Harness hỗ trợ sinh task đa tầng theo 5 cấp độ khó (Level 1 → Level 5):
-- **Level 1**: 2 phép biến đổi độc lập trên 2 cột riêng biệt.
-- **Level 2**: 3 phép biến đổi độc lập / có lồng nhau (chained operations).
-- **Level 3**: 4 phép biến đổi độc lập + 1 phép biến đổi phụ thuộc đa cột ($C = A \text{ op } B$).
-- **Level 4**: 5 phép biến đổi độc lập + 2 phép biến đổi phụ thuộc.
-- **Level 5**: 6 phép biến đổi độc lập + 3 phép biến đổi phụ thuộc.
+Harness hỗ trợ sinh task đa tầng theo độ sâu cây cú pháp AST (Level 0 → Level 5):
+- **Level 0 (Atomic):** 1 phép biến đổi đơn biến $f(x)$ ($d = 1$).
+- **Level 1 (Atomic Unary):** 2 phép biến đổi đơn biến độc lập ($d = 1$, không lồng ghép).
+- **Level 2 (Composed Unary):** 3 phép biến đổi lồng ghép $f(g(x))$ ($d = 2$, bảo đảm lồng ghép chuỗi hàm).
+- **Level 3 (Interactions):** 3 cột độc lập + 1 tương tác phụ thuộc đa cột ($C = A \text{ op } B$, $d = 2$).
+- **Level 4 (Conditional / If-Else):** 3 cột độc lập (chứa hàm phân mảnh / indicator) + 1 tương tác điều kiện phân mảnh.
+- **Level 5 (Hybrid Deep AST):** 4 cột độc lập (lồng ghép + conditional) + 2 tương tác đa biến với độ sâu $d \ge 3$.
 
-Tập phép biến đổi hỗ trợ phong phú gồm:
+Tập 24 phép biến đổi chuẩn hóa:
 - **Đơn biến & Phi tuyến:** `LogTransformation`, `Log1pTransformation`, `SquareRootTransformation`, `SquareTransformation`, `CubeTransformation`, `CubeRootTransformation`, `ExpTransformation`, `InverseTransformation`, `AbsTransformation`.
 - **Chuẩn hóa:** `StandardScalerTransformation`, `MinMaxScalerTransformation`.
 - **Lượng giác & Kích hoạt:** `SinTransformation`, `CosTransformation`, `TanhTransformation`, `SigmoidTransformation`.
-- **Tương tác đa cột (Inter-column):** `AddInteractionTransformation` ($A + B$), `SubtractInteractionTransformation` ($A - B$), `MultiplyInteractionTransformation` ($A \times B$), `DivideInteractionTransformation` ($A / B$).
+- **Phân mảnh & Điều kiện (Piecewise / Conditional):** `IndicatorZeroTransformation` ($\mathbb{I}(x > 0)$), `IndicatorMeanTransformation` ($\mathbb{I}(x > \text{mean}(x))$), `ClipZeroTransformation` ($\max(x, 0)$ / ReLU), `PiecewiseLogTransformation` ($\log(x) \text{ if } x > 1 \text{ else } x$).
+- **Tương tác đa cột (Inter-column):** `AddInteractionTransformation` ($A + B$), `SubtractInteractionTransformation` ($A - B$), `MultiplyInteractionTransformation` ($A \times B$), `DivideInteractionTransformation` ($A / B$), `ConditionalInteractionTransformation` ($A \text{ if } A > \text{mean}(A) \text{ else } B$).
+
+Harness tự động áp dụng **Ngân sách thích ứng (Tiered Budget)** theo từng Level (Level 1: 40k tokens $\to$ Level 5: 120k tokens), đồng thời cố định `--seed 42` để đảm bảo tính tái lập 100% trên model và task generation.
 
 Sinh task qua CLI `run_pipeline.py` hoặc `task_builder`:
 
 ```powershell
-# Chạy pipeline với Level 3
-.venv\Scripts\python.exe run_pipeline.py --level 3 --task-count 24
+# Chạy pipeline với Level 3 và seed 42
+.venv\Scripts\python.exe run_pipeline.py --level 3 --task-count 24 --seed 42
 
 # Hoặc chỉ sinh task kiểm tra trước
 .venv\Scripts\python.exe -m src.benchmark.task_builder `
@@ -135,6 +139,7 @@ Sinh task qua CLI `run_pipeline.py` hoặc `task_builder`:
   --level 3 `
   --seed 42
 ```
+
 
 ## Sandbox
 
