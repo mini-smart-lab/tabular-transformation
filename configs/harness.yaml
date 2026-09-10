@@ -1,9 +1,9 @@
 budget:
-  max_total_tokens: 40000
-  max_tool_calls: 30
+  max_total_tokens: 100000
+  max_tool_calls: 25
   max_total_execution_seconds: 120
   max_total_cpu_seconds: 120
-  max_wall_time_seconds: 240
+  max_wall_time_seconds: 300
 sandbox:
   backend: local
   execution_timeout_seconds: 15
@@ -36,3 +36,8 @@ operator_vocabulary:
   - SubtractInteractionTransformation
   - MultiplyInteractionTransformation
   - DivideInteractionTransformation
+  - IndicatorZeroTransformation
+  - IndicatorMeanTransformation
+  - ClipZeroTransformation
+  - PiecewiseLogTransformation
+  - ConditionalInteractionTransformation

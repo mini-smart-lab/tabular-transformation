@@ -18,7 +18,7 @@ import yaml
 from src.benchmark.aggregate import aggregate_results
 from src.benchmark.runner import BenchmarkRunner
 from src.benchmark.task_builder import ALL_OPERATORS, build_task
-from src.config import HarnessConfig, ModelConfig
+from src.config import HarnessConfig, ModelConfig, get_level_budget
 from src.model_factory import create_model, resolve_model_config
 from src.sandbox.docker import DockerSandbox
 from src.sandbox.local_process import LocalProcessSandbox
@@ -45,10 +45,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--task-count", type=int, default=24)
     parser.add_argument(
         "--level", type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
-        help="Difficulty level (0=atomic, 1=2 indep, 2=3 indep/chained, 3=4 indep+1 interaction, 4=5 indep+2 inter, 5=6 indep+3 inter; default: 1)",
+        help="Difficulty level (0=atomic, 1=atomic unary, 2=composed unary, 3=interactions, 4=conditional if/else, 5=hybrid deep AST; default: 1)",
     )
-    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--seed", type=int, default=42,
+        help="Random seed for task generation, data sampling, and model reproducibility (default: 42)",
+    )
     parser.add_argument("--train-fraction", type=float, default=0.7)
+
     parser.add_argument(
         "--rows-per-task", type=int, default=10_000,
         help="Deterministically sample this many source rows per task; 0 uses all rows",
@@ -57,10 +61,15 @@ def parse_args() -> argparse.Namespace:
         "--operators", nargs="+", choices=sorted(ALL_OPERATORS), default=sorted(ALL_OPERATORS)
     )
     parser.add_argument(
+        "--fixed-budget", action="store_true",
+        help="Use fixed budget from harness config instead of level-specific adaptive budget",
+    )
+    parser.add_argument(
         "--prepare-only", action="store_true",
         help="Validate input and generate tasks without creating an API client",
     )
     return parser.parse_args()
+
 
 
 def main() -> int:
@@ -116,13 +125,18 @@ def main() -> int:
             "transformations": transforms,
         })
 
-    model_config = ModelConfig.model_validate(
-        yaml.safe_load(args.model_config.read_text(encoding="utf-8"))
-    )
+    model_config_raw = yaml.safe_load(args.model_config.read_text(encoding="utf-8")) or {}
+    if args.seed is not None and "seed" not in model_config_raw:
+        model_config_raw["seed"] = args.seed
+    model_config = ModelConfig.model_validate(model_config_raw)
     model_config = resolve_model_config(model_config)
+
     harness_config = HarnessConfig.model_validate(
         yaml.safe_load(args.harness_config.read_text(encoding="utf-8"))
     )
+    if not args.fixed_budget:
+        harness_config.budget = get_level_budget(args.level, harness_config.budget)
+
     manifest: dict[str, Any] = {
         "pipeline_run": run_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -249,6 +263,7 @@ def _build_report_data(
         "pipeline_run": manifest["pipeline_run"],
         "source": manifest["source"],
         "level": manifest.get("level", 1),
+        "seed": manifest.get("seed", 42),
         "model": manifest["model"],
         "sandbox_backend": manifest["harness"]["sandbox"]["backend"],
         "task_count": task_count,
@@ -307,6 +322,7 @@ def _render_markdown_report(report: dict[str, Any], summary: pd.DataFrame) -> st
         f"- Pipeline run: `{report['pipeline_run']}`",
         f"- Source: `{report['source']}`",
         f"- Level: {report.get('level', 1)}",
+        f"- Seed: {report.get('seed', 42)}",
         f"- Model: `{report['model']['provider']}/{report['model']['model']}`",
         f"- Sandbox: `{report['sandbox_backend']}`",
         f"- Tasks: {report['task_count']} ({report['submitted_task_count']} submitted, {report['submission_rate'] * 100:.1f}% completion rate)",
@@ -373,6 +389,7 @@ def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
         "# Prepared Benchmark Dataset", "",
         f"- Source: `{manifest['source']}`",
         f"- Level: {manifest.get('level', 1)}",
+        f"- Seed: {manifest.get('seed', 42)}",
         f"- Rows: {manifest['source_rows']}",
         f"- Columns: {len(manifest['source_columns'])}",
         f"- Generated tasks: {manifest['task_count']}",
@@ -382,6 +399,7 @@ def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
         *[f"- {name}: {count}" for name, count in sorted(operator_counts.items())],
         "",
     ]
+
     path.write_text("\n".join(lines), encoding="utf-8")
 
 

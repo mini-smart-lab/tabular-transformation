@@ -62,7 +62,24 @@ _OPERATOR_ALIASES: dict[str, str] = {
     "divide": "DivideInteractionTransformation",
     "divideinteraction": "DivideInteractionTransformation",
     "divideinteractiontransformation": "DivideInteractionTransformation",
+    "indicator_zero": "IndicatorZeroTransformation",
+    "indicatorzero": "IndicatorZeroTransformation",
+    "indicatorzerotransformation": "IndicatorZeroTransformation",
+    "indicator_mean": "IndicatorMeanTransformation",
+    "indicatormean": "IndicatorMeanTransformation",
+    "indicatormeantransformation": "IndicatorMeanTransformation",
+    "clip_zero": "ClipZeroTransformation",
+    "clipzero": "ClipZeroTransformation",
+    "clipzerotransformation": "ClipZeroTransformation",
+    "relu": "ClipZeroTransformation",
+    "piecewise_log": "PiecewiseLogTransformation",
+    "piecewiselog": "PiecewiseLogTransformation",
+    "piecewiselogtransformation": "PiecewiseLogTransformation",
+    "conditional_interaction": "ConditionalInteractionTransformation",
+    "conditionalinteraction": "ConditionalInteractionTransformation",
+    "conditionalinteractiontransformation": "ConditionalInteractionTransformation",
 }
+
 
 
 def canonicalize_operator(op: str) -> str:

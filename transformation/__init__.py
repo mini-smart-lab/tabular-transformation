@@ -26,6 +26,13 @@ from transformation.interaction import (
     MultiplyInteractionTransformation,
     DivideInteractionTransformation,
 )
+from transformation.conditional import (
+    IndicatorZeroTransformation,
+    IndicatorMeanTransformation,
+    ClipZeroTransformation,
+    PiecewiseLogTransformation,
+    ConditionalInteractionTransformation,
+)
 
 __all__ = [
     "Transformation",
@@ -48,4 +55,10 @@ __all__ = [
     "SubtractInteractionTransformation",
     "MultiplyInteractionTransformation",
     "DivideInteractionTransformation",
+    "IndicatorZeroTransformation",
+    "IndicatorMeanTransformation",
+    "ClipZeroTransformation",
+    "PiecewiseLogTransformation",
+    "ConditionalInteractionTransformation",
 ]
+

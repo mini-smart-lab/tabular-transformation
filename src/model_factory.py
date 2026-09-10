@@ -43,11 +43,13 @@ def resolve_model_config(config: ModelConfig) -> ModelConfig:
 def _build_nvidia(config: ModelConfig, api_key: str) -> Any:
     from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
-    kwargs = dict(
+    kwargs: dict[str, Any] = dict(
         model=config.model,
         temperature=config.temperature,
         api_key=api_key,
     )
+    if config.seed is not None:
+        kwargs["seed"] = config.seed
     if config.max_output_tokens is not None:
         kwargs["max_tokens"] = config.max_output_tokens
     return ChatNVIDIA(**kwargs)
@@ -58,12 +60,16 @@ def _build_openai(config: ModelConfig, api_key: str) -> Any:
         from langchain_openai import ChatOpenAI
     except ImportError as exc:
         raise RuntimeError("provider 'openai' requires the optional langchain-openai package") from exc
-    return ChatOpenAI(
+    kwargs: dict[str, Any] = dict(
         model=config.model,
         temperature=config.temperature,
         api_key=api_key,
         max_tokens=config.max_output_tokens,
     )
+    if config.seed is not None:
+        kwargs["seed"] = config.seed
+    return ChatOpenAI(**kwargs)
+
 
 
 register_provider("nvidia", _build_nvidia)

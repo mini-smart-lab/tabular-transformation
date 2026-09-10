@@ -154,3 +154,53 @@ def test_canonical_operator_normalization():
     metrics = compute_operator_metrics(pred, truth)
     assert metrics.f1 == 1.0
     assert metrics.exact_sequence_accuracy == 1.0
+
+
+def test_conditional_transformations():
+    from transformation import (
+        IndicatorZeroTransformation,
+        IndicatorMeanTransformation,
+        ClipZeroTransformation,
+        PiecewiseLogTransformation,
+        ConditionalInteractionTransformation,
+    )
+    from src.config import get_level_budget, LEVEL_BUDGETS
+
+    # IndicatorZero
+    data = np.array([-2.0, -1.0, 0.0, 1.0, 2.0])
+    ind_zero = IndicatorZeroTransformation()
+    assert ind_zero.is_applicable(data)
+    assert np.allclose(ind_zero.transform(data), [0.0, 0.0, 0.0, 1.0, 1.0])
+
+    # IndicatorMean
+    ind_mean = IndicatorMeanTransformation()
+    assert ind_mean.is_applicable(data)
+    # mean is 0.0, so > 0.0 gives [0, 0, 0, 1, 1]
+    assert np.allclose(ind_mean.transform(data), [0.0, 0.0, 0.0, 1.0, 1.0])
+
+    # ClipZero (ReLU)
+    clip_op = ClipZeroTransformation()
+    assert clip_op.is_applicable(data)
+    assert np.allclose(clip_op.transform(data), [0.0, 0.0, 0.0, 1.0, 2.0])
+
+    # PiecewiseLog
+    pos_data = np.array([0.5, 1.0, 2.0, np.e])
+    pw_log = PiecewiseLogTransformation()
+    assert pw_log.is_applicable(pos_data)
+    assert np.allclose(pw_log.transform(pos_data), [0.5, 1.0, np.log(2.0), 1.0])
+
+    # ConditionalInteraction
+    col_a = np.array([10.0, -5.0, 20.0, -10.0])  # mean = 3.75
+    col_b = np.array([1.0, 2.0, 3.0, 4.0])
+    cond_inter = ConditionalInteractionTransformation()
+    assert cond_inter.is_applicable_columns(col_a, col_b)
+    # mask: col_a > 3.75 -> [True, False, True, False]
+    # out: [10.0, 2.0, 20.0, 4.0]
+    assert np.allclose(cond_inter.transform_columns(col_a, col_b), [10.0, 2.0, 20.0, 4.0])
+
+    # Test Level Budgets
+    for lvl in range(6):
+        budget = get_level_budget(lvl)
+        assert budget.max_total_tokens >= 40_000
+        assert budget.max_tool_calls >= 8
+

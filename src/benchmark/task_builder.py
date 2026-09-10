@@ -30,6 +30,11 @@ from transformation import (
     SubtractInteractionTransformation,
     MultiplyInteractionTransformation,
     DivideInteractionTransformation,
+    IndicatorZeroTransformation,
+    IndicatorMeanTransformation,
+    ClipZeroTransformation,
+    PiecewiseLogTransformation,
+    ConditionalInteractionTransformation,
 )
 
 OPERATORS: dict[str, type[Transformation]] = {
@@ -48,13 +53,25 @@ OPERATORS: dict[str, type[Transformation]] = {
     "TanhTransformation": TanhTransformation,
     "SigmoidTransformation": SigmoidTransformation,
     "AbsTransformation": AbsTransformation,
+    "IndicatorZeroTransformation": IndicatorZeroTransformation,
+    "IndicatorMeanTransformation": IndicatorMeanTransformation,
+    "ClipZeroTransformation": ClipZeroTransformation,
+    "PiecewiseLogTransformation": PiecewiseLogTransformation,
 }
+
+CONDITIONAL_UNARY_OPERATORS: list[str] = [
+    "IndicatorZeroTransformation",
+    "IndicatorMeanTransformation",
+    "ClipZeroTransformation",
+    "PiecewiseLogTransformation",
+]
 
 INTERACTION_OPERATORS: dict[str, type[Transformation]] = {
     "AddInteractionTransformation": AddInteractionTransformation,
     "SubtractInteractionTransformation": SubtractInteractionTransformation,
     "MultiplyInteractionTransformation": MultiplyInteractionTransformation,
     "DivideInteractionTransformation": DivideInteractionTransformation,
+    "ConditionalInteractionTransformation": ConditionalInteractionTransformation,
 }
 
 ALL_OPERATORS: dict[str, type[Transformation]] = {**OPERATORS, **INTERACTION_OPERATORS}
@@ -148,16 +165,22 @@ def build_task(
     columns = list(frame.columns)
     num_cols = len(columns)
 
-    # Level specs: (num_independent, num_interactions, allow_chain)
+    # Level specifications:
+    # Level 0: 1 indep, 0 inter, d=1 (atomic)
+    # Level 1: 2 indep, 0 inter, d=1 (atomic unary)
+    # Level 2: 3 indep, 0 inter, d=2 (composed unary f(g(x)))
+    # Level 3: 3 indep, 1 inter, d=2 (interaction)
+    # Level 4: 3 indep (with conditional ops), 1 inter (conditional/standard), d=2 (piecewise/if-else)
+    # Level 5: 4 indep (composed+conditional), 2 inter, d=3+ (hybrid deep AST)
     level_specs = {
-        0: (1, 0, False),
-        1: (2, 0, False),
-        2: (3, 0, True),
-        3: (4, 1, True),
-        4: (5, 2, True),
-        5: (6, 3, True),
+        0: (1, 0, False, 0.0),
+        1: (2, 0, False, 0.0),
+        2: (3, 0, True, 1.0),
+        3: (3, 1, True, 0.5),
+        4: (3, 1, True, 0.6),
+        5: (4, 2, True, 0.8),
     }
-    req_indep, req_inter, req_chain = level_specs.get(level, (min(2, num_cols), 0, False))
+    req_indep, req_inter, req_chain, chain_prob = level_specs.get(level, (min(2, num_cols), 0, False, 0.0))
 
     # Adjust requirements if dataset has few columns
     req_indep = min(req_indep, max(1, num_cols - 2 * req_inter - 1))
@@ -174,27 +197,50 @@ def build_task(
 
     # 1. Independent column transformations
     available_unary = operator_names or list(OPERATORS)
-    for col in indep_cols:
+    for col_idx, col in enumerate(indep_cols):
         col_data = frame[col].to_numpy()
-        valid_ops = [name for name in available_unary if name in OPERATORS and OPERATORS[name]().is_applicable(col_data)]
+        valid_ops = [
+            name for name in available_unary
+            if name in OPERATORS and OPERATORS[name]().is_applicable(col_data)
+        ]
         if not valid_ops:
             if operator_names is not None:
                 continue
             valid_ops = ["StandardScalerTransformation", "SquareTransformation"]
-        
-        chosen_op = rng.choice(valid_ops)
+
+        # In level 4 and 5, prioritize conditional/piecewise unary operators for some columns
+        if level in (4, 5) and col_idx == 0:
+            cond_valid = [op for op in valid_ops if op in CONDITIONAL_UNARY_OPERATORS]
+            chosen_op = rng.choice(cond_valid) if cond_valid else rng.choice(valid_ops)
+        else:
+            chosen_op = rng.choice(valid_ops)
+
         ops_list = [chosen_op]
 
-        # If chaining allowed and level >= 2, optionally chain 2 operators
-        if allow_chaining and req_chain and rng.random() < 0.4:
-            intermed = OPERATORS[chosen_op]().transform(col_data)
-            second_valid = [
-                name for name in available_unary
-                if name in OPERATORS and name != chosen_op and OPERATORS[name]().is_applicable(intermed)
-            ]
-            if second_valid:
-                second_op = rng.choice(second_valid)
-                ops_list.append(second_op)
+        # Apply chaining if enabled
+        should_chain = allow_chaining and req_chain and (rng.random() < chain_prob or (level == 2 and col_idx < 2))
+        if should_chain:
+            try:
+                intermed = OPERATORS[chosen_op]().transform(col_data)
+                second_valid = [
+                    name for name in available_unary
+                    if name in OPERATORS and name != chosen_op and OPERATORS[name]().is_applicable(intermed)
+                ]
+                if second_valid:
+                    second_op = rng.choice(second_valid)
+                    ops_list.append(second_op)
+
+                    # In level 5, allow depth 3 for the first column
+                    if level == 5 and col_idx == 0 and rng.random() < 0.5:
+                        intermed2 = OPERATORS[second_op]().transform(intermed)
+                        third_valid = [
+                            name for name in available_unary
+                            if name in OPERATORS and name != second_op and OPERATORS[name]().is_applicable(intermed2)
+                        ]
+                        if third_valid:
+                            ops_list.append(rng.choice(third_valid))
+            except Exception:
+                pass
 
         task_transforms.append({
             "column": col,
@@ -208,18 +254,40 @@ def build_task(
         if len(source_pool) < 2:
             source_pool = columns  # fallback pool
 
-        for target in target_candidates:
+        for t_idx, target in enumerate(target_candidates):
             if len(source_pool) < 2:
                 break
             src_a, src_b = rng.sample([c for c in source_pool if c != target], 2)
+            
+            # For Level 4 and 5, include conditional interaction
+            cand_interaction_names = list(INTERACTION_OPERATORS)
+            if level == 4 and t_idx == 0:
+                # Prioritize conditional interaction
+                cand_interaction_names = ["ConditionalInteractionTransformation"] + [
+                    k for k in INTERACTION_OPERATORS if k != "ConditionalInteractionTransformation"
+                ]
+
             interactions = applicable_interactions(
-                frame, [target], [src_a, src_b], list(INTERACTION_OPERATORS)
+                frame, [target], [src_a, src_b], cand_interaction_names
             )
             if interactions:
                 _, s_a, s_b, op_name = rng.choice(interactions)
+                ops_list = [op_name]
+
+                # In level 5, allow unary transform on top of interaction: f(x1 op x2)
+                if level == 5 and rng.random() < 0.5:
+                    op_inst = INTERACTION_OPERATORS[op_name]()
+                    inter_val = op_inst.transform_columns(frame[s_a].to_numpy(), frame[s_b].to_numpy())
+                    unary_on_inter = [
+                        u for u in available_unary
+                        if u in OPERATORS and OPERATORS[u]().is_applicable(inter_val)
+                    ]
+                    if unary_on_inter:
+                        ops_list.append(rng.choice(unary_on_inter))
+
                 task_transforms.append({
                     "column": target,
-                    "operators": [op_name],
+                    "operators": ops_list,
                     "source_columns": [s_a, s_b],
                     "interaction": op_name.replace("InteractionTransformation", "").lower(),
                 })
@@ -258,11 +326,16 @@ def build_task(
             src_a, src_b = srcs
             op_name = item["operators"][0]
             op = INTERACTION_OPERATORS[op_name]()
-            result[col] = op.transform_columns(source[src_a].to_numpy(), source[src_b].to_numpy())
+            res = op.transform_columns(source[src_a].to_numpy(), source[src_b].to_numpy())
+            if len(item["operators"]) > 1:
+                for u_name in item["operators"][1:]:
+                    res = OPERATORS[u_name]().transform(res)
+            result[col] = res
 
         if not np.isfinite(result.to_numpy(dtype=float)).all():
             raise ValueError("operators produced non-finite task output")
         return result
+
 
     output = Path(output_directory)
     hidden = output / "hidden"
