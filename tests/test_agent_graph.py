@@ -31,7 +31,7 @@ class MockToolCallingModel:
         ]
 
     def bind_tools(self, tools):
-        assert [tool.name for tool in tools] == ["run_python", "submit_solution"]
+        assert set(tool.name for tool in tools) == {"run_python", "read_image", "submit_solution"}
         return self
 
     def invoke(self, messages):
@@ -57,6 +57,46 @@ def test_graph_run_run_submit(tmp_path):
     assert state["tool_calls"] == 3
     assert state["token_used"] == 36
     assert len(sandbox.executed_code) == 2
+
+
+def test_graph_read_image(tmp_path):
+    class MockImageModel:
+        def __init__(self):
+            self.index = 0
+            self.responses = [
+                AIMessage(content="", tool_calls=[{"name": "read_image", "args": {"path": "scatter.png"}, "id": "img1"}]),
+                AIMessage(
+                    content="",
+                    tool_calls=[{
+                        "name": "submit_solution",
+                        "args": {
+                            "script": SCRIPT,
+                            "transformations": [{"column": "x", "operators": ["square"]}],
+                        },
+                        "id": "sub1",
+                    }],
+                ),
+            ]
+
+        def bind_tools(self, tools):
+            assert "read_image" in [t.name for t in tools]
+            return self
+
+        def invoke(self, messages):
+            response = self.responses[self.index]
+            self.index += 1
+            response.usage_metadata = {"input_tokens": 10, "output_tokens": 2, "total_tokens": 12}
+            return response
+
+    sandbox = LocalMockSandbox(files={"scatter.png": b"\x89PNG\r\n\x1a\nfake_image_bytes"})
+    sandbox.start()
+    budget = BudgetManager(AgentBudgetConfig())
+    episode = DiscoveryGraph(
+        MockImageModel(), sandbox, budget, EpisodeLogger(tmp_path / "episode.jsonl")
+    )
+    state = normalize_terminal_state(episode.invoke())
+    assert state["status"] == "submitted"
+    assert state["tool_calls"] == 2
 
 
 def test_graph_budget_stops_without_extra_llm_call():

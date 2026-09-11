@@ -104,7 +104,7 @@ class DiscoveryGraph:
             name = call.get("name", "")
             self.budget.record_tool_call()
             try:
-                if name == "run_python" and self.budget.tool_calls > self.budget.config.max_tool_calls:
+                if self.budget.tool_calls > self.budget.config.max_tool_calls:
                     result: Any = {"status": "error", "stderr": "budget exhausted"}
                 elif name not in self.tools.by_name:
                     result = {"status": "error", "stderr": f"unknown tool: {name}"}
@@ -112,9 +112,18 @@ class DiscoveryGraph:
                     result = self.tools.by_name[name].invoke(call.get("args", {}))
             except Exception as exc:
                 result = {"status": "error", "stderr": f"invalid tool call: {exc}"}
+
+            if isinstance(result, dict) and result.get("content_type") == "image" and result.get("status") == "success":
+                tool_content: Any = [
+                    {"type": "text", "text": f"Image file '{result.get('path')}' loaded ({result.get('size_bytes', 0)} bytes):"},
+                    {"type": "image_url", "image_url": {"url": result.get("data_url")}},
+                ]
+            else:
+                tool_content = json.dumps(result, default=str)
+
             observations.append(
                 ToolMessage(
-                    content=json.dumps(result, default=str),
+                    content=tool_content,
                     tool_call_id=call.get("id", name or "unknown"),
                     name=name or "unknown",
                 )

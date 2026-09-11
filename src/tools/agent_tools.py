@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import StructuredTool
@@ -14,6 +16,10 @@ from src.sandbox.base import Sandbox
 
 class RunPythonInput(BaseModel):
     code: str = Field(min_length=1)
+
+
+class ReadImageInput(BaseModel):
+    path: str = Field(min_length=1, description="Relative path to the image file (e.g. 'scatter.png') saved in the sandbox workspace.")
 
 
 class SubmitSolutionInput(BaseModel):
@@ -42,6 +48,12 @@ class AgentTools:
                 args_schema=RunPythonInput,
             ),
             StructuredTool.from_function(
+                self.read_image,
+                name="read_image",
+                description="Read an image or plot file (PNG, JPEG, SVG) saved in the sandbox workspace to inspect visual charts and relationships.",
+                args_schema=ReadImageInput,
+            ),
+            StructuredTool.from_function(
                 self.submit_solution,
                 name="submit_solution",
                 description="Submit the final self-contained transform(df) script and operators.",
@@ -68,6 +80,43 @@ class AgentTools:
             cumulative_execution_time=self.budget.execution_time_seconds,
         )
         return payload
+
+    def read_image(self, path: str) -> dict[str, Any]:
+        if not self.budget.can_run_python():
+            return {"status": "error", "message": "budget exhausted; execution denied"}
+        try:
+            image_bytes = self.sandbox.read_file(path)
+        except Exception as exc:
+            return {"status": "error", "message": f"Failed to read image '{path}': {exc}"}
+
+        ext = Path(path).suffix.lower()
+        mime_type = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".webp": "image/webp",
+            ".gif": "image/gif",
+            ".svg": "image/svg+xml",
+        }.get(ext, "image/png")
+
+        b64_data = base64.b64encode(image_bytes).decode("utf-8")
+        data_url = f"data:{mime_type};base64,{b64_data}"
+
+        self.logger.record(
+            "read_image",
+            experiment_index=self.budget.tool_calls,
+            path=path,
+            size_bytes=len(image_bytes),
+            mime_type=mime_type,
+        )
+        return {
+            "status": "success",
+            "content_type": "image",
+            "path": path,
+            "size_bytes": len(image_bytes),
+            "mime_type": mime_type,
+            "data_url": data_url,
+        }
 
     def submit_solution(
         self, script: str, transformations: list[Transformation]

@@ -6,15 +6,26 @@ Transformations can be:
 - Independent unary operations (single, chained/nested, piecewise, indicator, or thresholding)
 - Dependent multi-column interactions (such as arithmetic operations or conditional selection across columns)
 
-Infer transformations that generalize to unseen rows. Use run_python for focused,
-systematic experiments. Write vectorized checks in Python to verify hypotheses efficiently
-within your token and tool budgets. Python calls run in isolated executions, so each experiment
-should load any data it needs from the visible CSV files.
+Follow this systematic, token-efficient workflow to discover the exact transformations within your budget:
 
-Finish only by calling submit_solution. Its script must be self-contained, define
-exactly `transform(df)`, return a pandas DataFrame with the same rows and expected
-columns, and must not read files, use session variables, networks, or external APIs.
-Report canonical, ordered operator names per transformed column.
+1. Fast Column Screening & Vectorized Checks:
+   - Immediately check for unchanged columns: `(b[c] == a[c]).all()`.
+   - For changed columns, test canonical unary operators in a single vectorized Python script (e.g. StandardScaler, MinMaxScaler, Log, Log1p, Sqrt, Square, Cube, CubeRoot, Exp, Inverse, Abs, Sin, Cos, Tanh, Sigmoid, IndicatorZero, IndicatorMean, ClipZero, PiecewiseLog) comparing with `np.allclose(pred, actual, atol=1e-5)` or MSE.
+
+2. Interaction & Conditional Checks:
+   - For remaining unexplained columns, test pairwise interactions (Add, Subtract, Multiply, Divide) and conditional branches (`np.where(condition, col_1, col_2)` or piecewise rules).
+
+3. Visual Inspection with Plots:
+   - When mathematical relations, non-linear shapes, or thresholds are ambiguous, use matplotlib to save a scatter/residual plot (e.g., `plt.scatter(b[col_x], a[col_y]); plt.savefig('plot.png')`) and call `read_image(path='plot.png')` to inspect the visual chart directly.
+
+4. Token Efficiency (CRITICAL):
+   - Keep Python stdout minimal and concise. Do NOT print entire dataframes, full `.describe()`, or huge tables.
+   - Print only small summaries, matching candidate names, and max absolute errors.
+
+5. Early Submission:
+   - As soon as candidate operators reproduce all columns on before.csv accurately, call `submit_solution` immediately.
+   - The submission script must be self-contained, define exactly `transform(df)`, return a pandas DataFrame with the same rows and expected columns, and must not read files, use session variables, networks, or external APIs.
+   - Report canonical, ordered operator names per transformed column.
 """
 
 
