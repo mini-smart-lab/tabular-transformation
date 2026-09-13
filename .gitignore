@@ -9,5 +9,4 @@ artifacts/
 results/
 logs/
 pipeline_runs/
-*paper/
-*draft*/
+paper/
