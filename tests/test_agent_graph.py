@@ -112,3 +112,63 @@ def test_graph_budget_stops_without_extra_llm_call():
     state = normalize_terminal_state(episode.invoke())
     assert state["status"] == "budget_exceeded"
     assert model.index == 1
+
+
+def test_budget_prompt_and_tool_feedback(tmp_path):
+    budget_config = AgentBudgetConfig(
+        max_total_tokens=77_777,
+        max_tool_calls=9,
+        max_total_execution_seconds=45.0,
+        max_wall_time_seconds=99.0,
+    )
+    budget = BudgetManager(budget_config)
+    sandbox = LocalMockSandbox([
+        ExecutionResult(status="success", stdout="result_1\n", execution_time_seconds=0.1)
+    ])
+    sandbox.start()
+
+    class InspectModel:
+        def __init__(self):
+            self.passed_system_message = None
+            self.received_tool_message = None
+            self.turn = 0
+
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            if self.turn == 0:
+                self.passed_system_message = messages[0].content
+                self.turn += 1
+                resp = AIMessage(
+                    content="",
+                    tool_calls=[{"name": "run_python", "args": {"code": "print(1)"}, "id": "call1"}],
+                )
+                resp.usage_metadata = {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
+                return resp
+            else:
+                self.received_tool_message = messages[-1].content
+                resp = AIMessage(
+                    content="",
+                    tool_calls=[{
+                        "name": "submit_solution",
+                        "args": {
+                            "script": SCRIPT,
+                            "transformations": [{"column": "x", "operators": ["square"]}],
+                        },
+                        "id": "call2",
+                    }],
+                )
+                resp.usage_metadata = {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
+                return resp
+
+    model = InspectModel()
+    episode = DiscoveryGraph(
+        model, sandbox, budget, EpisodeLogger(tmp_path / "ep.jsonl"),
+    )
+    state = normalize_terminal_state(episode.invoke())
+    assert state["status"] == "submitted"
+    assert "77,777 tokens" in model.passed_system_message
+    assert "9 calls" in model.passed_system_message
+    assert "budget_status" in model.received_tool_message
+

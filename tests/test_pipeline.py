@@ -12,6 +12,14 @@ def test_pipeline_has_zero_argument_project_defaults(monkeypatch):
     assert args.harness_config.as_posix() == "configs/harness.yaml"
     assert args.task_count == 24
     assert args.rows_per_task == 10_000
+    assert args.workers is None
+
+
+def test_pipeline_workers_cli_argument(monkeypatch):
+    monkeypatch.setattr("sys.argv", ["run_pipeline.py", "--workers", "8"])
+    args = parse_args()
+    assert args.workers == 8
+
 
 
 def test_pipeline_validates_numeric_complete_input():

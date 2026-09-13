@@ -5,7 +5,9 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import mean
@@ -16,6 +18,7 @@ import numpy as np
 import yaml
 
 from src.benchmark.aggregate import aggregate_results
+from src.benchmark.result import BenchmarkResult
 from src.benchmark.runner import BenchmarkRunner
 from src.benchmark.task_builder import ALL_OPERATORS, build_task
 from src.config import HarnessConfig, ModelConfig, get_level_budget
@@ -63,6 +66,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--fixed-budget", action="store_true",
         help="Use fixed budget from harness config instead of level-specific adaptive budget",
+    )
+    parser.add_argument(
+        "--workers", "--max-workers", type=int, default=None, dest="workers",
+        help="Number of concurrent worker threads for parallel task execution (default: from harness config benchmark.max_workers)",
     )
     parser.add_argument(
         "--prepare-only", action="store_true",
@@ -181,28 +188,51 @@ def main() -> int:
         result_dir=paths["results"],
         operator_vocabulary=harness_config.operator_vocabulary,
     )
-    model = create_model(model_config)
-    results = []
-    for index in range(args.task_count):
-        task_directory = paths["tasks"] / str(index)
-        print(f"[{index + 1}/{args.task_count}] Running task {index + 1}...")
+    workers = max(
+        1,
+        args.workers
+        if args.workers is not None
+        else harness_config.benchmark.max_workers,
+    )
+    print(f"Executing {args.task_count} tasks using {workers} concurrent worker(s)...")
+
+    results_by_index: dict[int, BenchmarkResult] = {}
+    print_lock = threading.Lock()
+
+    def _execute_task(task_index: int) -> tuple[int, BenchmarkResult]:
+        task_directory = paths["tasks"] / str(task_index)
+        task_model = create_model(model_config)
         result = runner.run_directory(
             task_directory,
-            model,
+            task_model,
             harness_config.budget,
             provider_model=f"{model_config.provider}/{model_config.model}",
         )
-        results.append(result)
-        trans_acc = (
-            result.evaluation.transformed_column_accuracy
-            if result.evaluation and result.evaluation.transformed_column_accuracy is not None
-            else (result.evaluation.functional_column_accuracy if result.evaluation else None)
-        )
-        metric = (
-            f"trans_acc={trans_acc:.3f} (all={result.evaluation.functional_column_accuracy:.3f})"
-            if result.evaluation else "no evaluation"
-        )
-        print(f"  {result.status}; {metric}; run_id={result.run_id}")
+        with print_lock:
+            trans_acc = (
+                result.evaluation.transformed_column_accuracy
+                if result.evaluation and result.evaluation.transformed_column_accuracy is not None
+                else (result.evaluation.functional_column_accuracy if result.evaluation else None)
+            )
+            metric = (
+                f"trans_acc={trans_acc:.3f} (all={result.evaluation.functional_column_accuracy:.3f})"
+                if result.evaluation else "no evaluation"
+            )
+            print(f"[{task_index + 1}/{args.task_count}] Task {task_index + 1}: {result.status}; {metric}; run_id={result.run_id}")
+        return task_index, result
+
+    if workers == 1:
+        for idx in range(args.task_count):
+            _, res = _execute_task(idx)
+            results_by_index[idx] = res
+    else:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(_execute_task, idx) for idx in range(args.task_count)]
+            for future in as_completed(futures):
+                idx, res = future.result()
+                results_by_index[idx] = res
+
+    results = [results_by_index[i] for i in range(args.task_count)]
 
     summary_path = paths["reports"] / "summary.csv"
     summary = aggregate_results(paths["results"], summary_path)

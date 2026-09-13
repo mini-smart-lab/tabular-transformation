@@ -53,6 +53,7 @@ sandbox:
 benchmark:
   numeric_atol: 1.0e-6
   numeric_rtol: 1.0e-5
+  max_workers: 4
 operator_vocabulary:
   - LogTransformation
   - Log1pTransformation

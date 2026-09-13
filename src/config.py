@@ -91,6 +91,7 @@ class SandboxConfig(StrictModel):
 class BenchmarkConfig(StrictModel):
     numeric_atol: float = Field(default=1e-6, ge=0)
     numeric_rtol: float = Field(default=1e-5, ge=0)
+    max_workers: int = Field(default=4, ge=1)
 
 
 class ModelConfig(StrictModel):

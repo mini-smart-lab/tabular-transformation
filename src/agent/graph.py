@@ -31,12 +31,17 @@ class DiscoveryGraph:
         self.budget = budget
         self.logger = logger
         self.provider_model = provider_model
+        resolved_sandbox_config = sandbox_config or SandboxConfig()
         self.tools = AgentTools(
-            sandbox, budget, logger, sandbox_config or SandboxConfig()
+            sandbox, budget, logger, resolved_sandbox_config
         )
         self.model = model.bind_tools(self.tools.langchain_tools)
         self.system_message = SystemMessage(
-            content=build_system_prompt(operator_vocabulary or [])
+            content=build_system_prompt(
+                operator_vocabulary=operator_vocabulary or [],
+                budget_config=budget.config,
+                sandbox_config=resolved_sandbox_config,
+            )
         )
         self.graph = self._build()
 
@@ -115,11 +120,19 @@ class DiscoveryGraph:
 
             if isinstance(result, dict) and result.get("content_type") == "image" and result.get("status") == "success":
                 tool_content: Any = [
-                    {"type": "text", "text": f"Image file '{result.get('path')}' loaded ({result.get('size_bytes', 0)} bytes):"},
+                    {"type": "text", "text": f"Image file '{result.get('path')}' loaded ({result.get('size_bytes', 0)} bytes) [Budget: {self.budget.tool_calls}/{self.budget.config.max_tool_calls} calls, ~{self.budget.total_tokens:,}/{self.budget.config.max_total_tokens:,} tokens used]:"},
                     {"type": "image_url", "image_url": {"url": result.get("data_url")}},
                 ]
             else:
-                tool_content = json.dumps(result, default=str)
+                if isinstance(result, dict):
+                    result_payload = dict(result)
+                    result_payload["budget_status"] = (
+                        f"{self.budget.tool_calls}/{self.budget.config.max_tool_calls} tool calls used, "
+                        f"~{self.budget.total_tokens:,}/{self.budget.config.max_total_tokens:,} tokens consumed"
+                    )
+                    tool_content = json.dumps(result_payload, default=str)
+                else:
+                    tool_content = json.dumps(result, default=str)
 
             observations.append(
                 ToolMessage(

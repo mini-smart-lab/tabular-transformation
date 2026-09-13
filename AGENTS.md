@@ -88,7 +88,7 @@ Copy-Item .env.example .env
 ```
 
 ### 3.2. Chạy kiểm thử (Testing)
-Tất cả 37+ tests được thiết kế để chạy **offline, nhanh chóng, không cần API Key và không phụ thuộc Docker**.
+Tất cả 42+ tests được thiết kế để chạy **offline, nhanh chóng, không cần API Key và không phụ thuộc Docker**.
 
 ```powershell
 # Chạy toàn bộ test suite
@@ -106,8 +106,8 @@ Tất cả 37+ tests được thiết kế để chạy **offline, nhanh chóng,
 # 1. Chạy sinh task thử nghiệm (không gọi LLM, không tốn credit)
 .venv\Scripts\python.exe run_pipeline.py --source notebooks\processed_data.csv --prepare-only --level 3 --task-count 5 --seed 42
 
-# 2. Chạy full pipeline end-to-end với LLM (NVIDIA / OpenAI)
-.venv\Scripts\python.exe run_pipeline.py --level 3 --task-count 24 --seed 42
+# 2. Chạy full pipeline end-to-end với LLM (chạy song song 4 workers)
+.venv\Scripts\python.exe run_pipeline.py --level 3 --task-count 24 --workers 4 --seed 42
 
 # 3. Chạy benchmark trên 1 task đơn lẻ
 .venv\Scripts\python.exe -m src.benchmark.runner --task data\0 --model-config configs\nvidia.yaml --harness-config configs\harness.yaml

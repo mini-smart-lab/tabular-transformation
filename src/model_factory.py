@@ -20,8 +20,8 @@ def register_provider(name: str, builder: ModelBuilder) -> None:
 def create_model(config: ModelConfig, *, env_file: str = ".env") -> Any:
     load_dotenv(env_file, override=False)
     config = resolve_model_config(config)
-    api_key = os.getenv(config.api_key_env)
-    if not api_key:
+    api_key = os.getenv(config.api_key_env, "")
+    if config.provider not in ("brute_force",) and config.api_key_env not in ("", "NO_KEY_REQUIRED", "NONE") and not api_key:
         raise RuntimeError(f"missing API key environment variable: {config.api_key_env}")
     try:
         builder = _PROVIDERS[config.provider]
@@ -71,6 +71,12 @@ def _build_openai(config: ModelConfig, api_key: str) -> Any:
     return ChatOpenAI(**kwargs)
 
 
+def _build_brute_force(config: ModelConfig, api_key: str) -> Any:
+    from src.agent.brute_force import BruteForceModel
+    return BruteForceModel(config=config)
+
 
 register_provider("nvidia", _build_nvidia)
 register_provider("openai", _build_openai)
+register_provider("brute_force", _build_brute_force)
+

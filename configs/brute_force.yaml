@@ -1,0 +1,5 @@
+provider: brute_force
+model: baseline-brute-force
+temperature: 0.0
+seed: 42
+api_key_env: NO_KEY_REQUIRED
