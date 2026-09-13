@@ -4,6 +4,43 @@ budget:
   max_total_execution_seconds: 120
   max_total_cpu_seconds: 120
   max_wall_time_seconds: 300
+level_budgets:
+  0:
+    max_total_tokens: 40000
+    max_tool_calls: 8
+    max_total_execution_seconds: 30
+    max_total_cpu_seconds: 30
+    max_wall_time_seconds: 120
+  1:
+    max_total_tokens: 40000
+    max_tool_calls: 10
+    max_total_execution_seconds: 30
+    max_total_cpu_seconds: 30
+    max_wall_time_seconds: 120
+  2:
+    max_total_tokens: 60000
+    max_tool_calls: 14
+    max_total_execution_seconds: 60
+    max_total_cpu_seconds: 60
+    max_wall_time_seconds: 180
+  3:
+    max_total_tokens: 90000
+    max_tool_calls: 18
+    max_total_execution_seconds: 90
+    max_total_cpu_seconds: 90
+    max_wall_time_seconds: 240
+  4:
+    max_total_tokens: 120000
+    max_tool_calls: 24
+    max_total_execution_seconds: 120
+    max_total_cpu_seconds: 120
+    max_wall_time_seconds: 300
+  5:
+    max_total_tokens: 150000
+    max_tool_calls: 30
+    max_total_execution_seconds: 150
+    max_total_cpu_seconds: 150
+    max_wall_time_seconds: 360
 sandbox:
   backend: local
   execution_timeout_seconds: 15

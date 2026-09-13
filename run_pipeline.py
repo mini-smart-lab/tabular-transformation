@@ -135,7 +135,9 @@ def main() -> int:
         yaml.safe_load(args.harness_config.read_text(encoding="utf-8"))
     )
     if not args.fixed_budget:
-        harness_config.budget = get_level_budget(args.level, harness_config.budget)
+        harness_config.budget = get_level_budget(
+            args.level, harness_config.budget, harness_config.level_budgets
+        )
 
     manifest: dict[str, Any] = {
         "pipeline_run": run_name,

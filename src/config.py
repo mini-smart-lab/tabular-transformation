@@ -15,7 +15,7 @@ class AgentBudgetConfig(StrictModel):
     max_wall_time_seconds: float = Field(default=300.0, gt=0)
 
 
-LEVEL_BUDGETS: dict[int, AgentBudgetConfig] = {
+DEFAULT_LEVEL_BUDGETS: dict[int, AgentBudgetConfig] = {
     0: AgentBudgetConfig(
         max_total_tokens=40_000,
         max_tool_calls=8,
@@ -60,11 +60,20 @@ LEVEL_BUDGETS: dict[int, AgentBudgetConfig] = {
     ),
 }
 
+# Backwards compatibility alias
+LEVEL_BUDGETS = DEFAULT_LEVEL_BUDGETS
 
-def get_level_budget(level: int, base_budget: AgentBudgetConfig | None = None) -> AgentBudgetConfig:
-    """Return level-appropriate budget, falling back to base_budget or defaults."""
-    if level in LEVEL_BUDGETS:
-        return LEVEL_BUDGETS[level]
+
+def get_level_budget(
+    level: int,
+    base_budget: AgentBudgetConfig | None = None,
+    level_budgets: dict[int, AgentBudgetConfig] | None = None,
+) -> AgentBudgetConfig:
+    """Return level-appropriate budget, checking custom level_budgets first, then default level budgets, then base_budget."""
+    if level_budgets and level in level_budgets:
+        return level_budgets[level]
+    if level in DEFAULT_LEVEL_BUDGETS:
+        return DEFAULT_LEVEL_BUDGETS[level]
     return base_budget or AgentBudgetConfig()
 
 
@@ -95,6 +104,7 @@ class ModelConfig(StrictModel):
 
 class HarnessConfig(StrictModel):
     budget: AgentBudgetConfig = Field(default_factory=AgentBudgetConfig)
+    level_budgets: dict[int, AgentBudgetConfig] = Field(default_factory=lambda: dict(DEFAULT_LEVEL_BUDGETS))
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
     benchmark: BenchmarkConfig = Field(default_factory=BenchmarkConfig)
     operator_vocabulary: list[str] = Field(default_factory=lambda: [
