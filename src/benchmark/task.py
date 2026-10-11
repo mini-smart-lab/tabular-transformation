@@ -18,6 +18,9 @@ class BenchmarkTask(BaseModel):
     test_before_path: Path | None = None
     test_after_path: Path | None = None
     ground_truth_transformations: list[Transformation]
+    level: int | None = None
+    source_dataset: str | None = None
+    domain: str | None = None
 
     def discovery_files(self) -> dict[str, Path]:
         """Only this mapping may be handed to the Tier-1 sandbox."""
@@ -48,6 +51,12 @@ def load_task_directory(
     before = pd.read_csv(before_source)
     after = pd.read_csv(after_source)
     _validate_pair(before, after)
+    raw_config = yaml.safe_load(config_source.read_text(encoding="utf-8"))
+    raw_config = raw_config if isinstance(raw_config, dict) else {}
+    level = raw_config.get("level")
+    source_dataset = raw_config.get("source_dataset")
+    domain = raw_config.get("domain")
+
     transformations = load_transformations(config_source)
     unknown = {item.column for item in transformations} - set(before.columns)
     if unknown:
@@ -71,6 +80,9 @@ def load_task_directory(
         test_before_path=hidden_before,
         test_after_path=hidden_after,
         ground_truth_transformations=transformations,
+        level=level,
+        source_dataset=source_dataset,
+        domain=domain,
     )
 
 

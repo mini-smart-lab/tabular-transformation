@@ -107,6 +107,9 @@ class BenchmarkRunner:
         result = BenchmarkResult(
             run_id=run_id,
             task_id=task.task_id,
+            level=task.level,
+            source_dataset=task.source_dataset,
+            domain=task.domain,
             status=state["status"],
             termination_reason=state["termination_reason"],
             submission=state["final_submission"],

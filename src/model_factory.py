@@ -65,6 +65,7 @@ def _build_openai(config: ModelConfig, api_key: str) -> Any:
         temperature=config.temperature,
         api_key=api_key,
         max_tokens=config.max_output_tokens,
+        max_retries=10,
     )
     if config.seed is not None:
         kwargs["seed"] = config.seed

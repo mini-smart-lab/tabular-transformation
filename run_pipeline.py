@@ -20,7 +20,10 @@ import yaml
 from src.benchmark.aggregate import aggregate_results
 from src.benchmark.result import BenchmarkResult
 from src.benchmark.runner import BenchmarkRunner
-from src.benchmark.task_builder import ALL_OPERATORS, build_task
+from src.benchmark.aggregate import aggregate_results
+from src.benchmark.result import BenchmarkResult
+from src.benchmark.runner import BenchmarkRunner
+from src.benchmark.task_builder import ALL_OPERATORS, build_multidataset_suite, build_task
 from src.config import HarnessConfig, ModelConfig, get_level_budget
 from src.model_factory import create_model, resolve_model_config
 from src.sandbox.docker import DockerSandbox
@@ -36,6 +39,10 @@ def parse_args() -> argparse.Namespace:
         help="Input numeric CSV (default: notebooks/processed_data.csv)",
     )
     parser.add_argument(
+        "--source-dir", type=Path, default=None,
+        help="Directory of source numeric CSVs (e.g. data/source_datasets). If specified or if --source is a directory, runs in multi-dataset mode.",
+    )
+    parser.add_argument(
         "--model-config", type=Path, default=Path("configs/nvidia.yaml"),
         help="Model configuration (default: configs/nvidia.yaml)",
     )
@@ -49,6 +56,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--level", type=int, default=1, choices=[0, 1, 2, 3, 4, 5],
         help="Difficulty level (0=atomic, 1=atomic unary, 2=composed unary, 3=interactions, 4=conditional if/else, 5=hybrid deep AST; default: 1)",
+    )
+    parser.add_argument(
+        "--levels", nargs="+", type=int, choices=[0, 1, 2, 3, 4, 5], default=None,
+        help="List of difficulty levels to balance across tasks (e.g. --levels 0 1 2 3 4 5; defaults to single --level)",
+    )
+    parser.add_argument(
+        "--datasets", nargs="+", type=str, default=None,
+        help="Optional subset of dataset names to include from source directory (e.g. --datasets california_housing diabetes)",
     )
     parser.add_argument(
         "--seed", type=int, default=42,
@@ -82,9 +97,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     started = time.monotonic()
-    source = args.source.resolve()
-    if not source.is_file():
-        raise FileNotFoundError(source)
+    source = args.source.resolve() if args.source else None
+    is_multi = args.source_dir is not None or (source is not None and source.is_dir())
+    source_dir = args.source_dir.resolve() if args.source_dir is not None else (source if source and source.is_dir() else None)
+    target_levels = args.levels if args.levels is not None else [args.level]
+
     if args.task_count <= 0:
         raise ValueError("task-count must be positive")
     if args.rows_per_task < 0:
@@ -107,30 +124,56 @@ def main() -> int:
     for path in paths.values():
         path.mkdir(parents=True, exist_ok=True)
 
-    source_frame = pd.read_csv(source)
-    _validate_source(source_frame)
-    generated = []
-    for index in range(args.task_count):
-        task_directory = paths["tasks"] / str(index)
-        task_frame = source_frame
-        if args.rows_per_task and len(source_frame) > args.rows_per_task:
-            task_frame = source_frame.sample(
-                n=args.rows_per_task, random_state=args.seed + index, replace=False
-            ).reset_index(drop=True)
-        transforms = build_task(
-            task_frame,
-            task_directory,
-            level=args.level,
-            seed=args.seed + index,
+    if is_multi:
+        if not source_dir.is_dir():
+            raise FileNotFoundError(f"source directory not found: {source_dir}")
+        generated = build_multidataset_suite(
+            source_input=source_dir,
+            output_directory=paths["tasks"],
+            levels=target_levels,
+            task_count=args.task_count,
+            seed=args.seed,
             train_fraction=args.train_fraction,
+            rows_per_task=args.rows_per_task,
             operator_names=args.operators,
+            dataset_filter=args.datasets,
         )
-        generated.append({
-            "task_id": str(index),
-            "seed": args.seed + index,
-            "level": args.level,
-            "transformations": transforms,
-        })
+        source_desc = str(source_dir)
+        source_rows = sum(len(pd.read_csv(paths["tasks"] / t["task_id"] / "train_before.csv")) for t in generated)
+        source_columns = []
+    else:
+        if not source.is_file():
+            raise FileNotFoundError(source)
+        source_frame = pd.read_csv(source)
+        _validate_source(source_frame)
+        source_desc = str(source)
+        source_rows = len(source_frame)
+        source_columns = list(source_frame.columns)
+        generated = []
+        for index in range(args.task_count):
+            task_directory = paths["tasks"] / str(index)
+            task_frame = source_frame
+            if args.rows_per_task and len(source_frame) > args.rows_per_task:
+                task_frame = source_frame.sample(
+                    n=args.rows_per_task, random_state=args.seed + index, replace=False
+                ).reset_index(drop=True)
+            lvl = target_levels[index % len(target_levels)]
+            transforms = build_task(
+                task_frame,
+                task_directory,
+                level=lvl,
+                seed=args.seed + index,
+                train_fraction=args.train_fraction,
+                operator_names=args.operators,
+                source_dataset=source.stem,
+            )
+            generated.append({
+                "task_id": str(index),
+                "source_dataset": source.stem,
+                "seed": args.seed + index,
+                "level": lvl,
+                "transformations": transforms,
+            })
 
     model_config_raw = yaml.safe_load(args.model_config.read_text(encoding="utf-8")) or {}
     if args.seed is not None and "seed" not in model_config_raw:
@@ -141,22 +184,20 @@ def main() -> int:
     harness_config = HarnessConfig.model_validate(
         yaml.safe_load(args.harness_config.read_text(encoding="utf-8"))
     )
-    if not args.fixed_budget:
-        harness_config.budget = get_level_budget(
-            args.level, harness_config.budget, harness_config.level_budgets
-        )
 
     manifest: dict[str, Any] = {
         "pipeline_run": run_name,
         "created_at": datetime.now(timezone.utc).isoformat(),
-        "source": str(source),
-        "source_rows": len(source_frame),
-        "source_columns": list(source_frame.columns),
+        "source": source_desc,
+        "is_multi_dataset": is_multi,
+        "source_rows": source_rows,
+        "source_columns": source_columns,
         "task_count": args.task_count,
-        "level": args.level,
+        "level": args.level if len(target_levels) == 1 else target_levels[0],
+        "levels": target_levels,
         "seed": args.seed,
         "train_fraction": args.train_fraction,
-        "rows_per_task": min(args.rows_per_task or len(source_frame), len(source_frame)),
+        "rows_per_task": min(args.rows_per_task or source_rows, source_rows),
         "operators": args.operators,
         "model": model_config.model_dump(exclude={"api_key_env"}),
         "api_key_env": model_config.api_key_env,
@@ -167,7 +208,8 @@ def main() -> int:
     manifest_path = run_directory / "manifest.json"
     _write_json(manifest_path, manifest)
 
-    print(f"Prepared {args.task_count} valid Level {args.level} tasks in {paths['tasks']}")
+    level_summary = f"Level(s) {target_levels}" if len(target_levels) > 1 else f"Level {args.level}"
+    print(f"Prepared {args.task_count} valid {level_summary} tasks in {paths['tasks']}")
     if args.prepare_only:
         _write_preparation_report(paths["reports"] / "report.md", manifest)
         print(f"Manifest: {manifest_path}")
@@ -202,10 +244,16 @@ def main() -> int:
     def _execute_task(task_index: int) -> tuple[int, BenchmarkResult]:
         task_directory = paths["tasks"] / str(task_index)
         task_model = create_model(model_config)
+        task_level = generated[task_index].get("level", args.level)
+        task_budget = harness_config.budget
+        if not args.fixed_budget:
+            task_budget = get_level_budget(
+                task_level, harness_config.budget, harness_config.level_budgets
+            )
         result = runner.run_directory(
             task_directory,
             task_model,
-            harness_config.budget,
+            task_budget,
             provider_model=f"{model_config.provider}/{model_config.model}",
         )
         with print_lock:
@@ -413,24 +461,48 @@ def _render_markdown_report(report: dict[str, Any], summary: pd.DataFrame) -> st
 
 def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
     operator_counts: dict[str, int] = {}
+    dataset_counts: dict[str, int] = {}
+    level_counts: dict[int, int] = {}
     for task in manifest["tasks"]:
+        ds = task.get("source_dataset")
+        if ds:
+            dataset_counts[ds] = dataset_counts.get(ds, 0) + 1
+        lvl = task.get("level")
+        if lvl is not None:
+            level_counts[lvl] = level_counts.get(lvl, 0) + 1
         for t in task.get("transformations", []):
             for op in t.get("operators", []):
                 operator_counts[op] = operator_counts.get(op, 0) + 1
     lines = [
         "# Prepared Benchmark Dataset", "",
         f"- Source: `{manifest['source']}`",
-        f"- Level: {manifest.get('level', 1)}",
+        f"- Multi-dataset suite: {manifest.get('is_multi_dataset', False)}",
+        f"- Level(s): {manifest.get('levels', [manifest.get('level', 1)])}",
         f"- Seed: {manifest.get('seed', 42)}",
         f"- Rows: {manifest['source_rows']}",
         f"- Columns: {len(manifest['source_columns'])}",
         f"- Generated tasks: {manifest['task_count']}",
         f"- Train fraction: {manifest['train_fraction']}",
         f"- Rows per task: {manifest['rows_per_task']}",
-        "", "## Operator distribution", "",
-        *[f"- {name}: {count}" for name, count in sorted(operator_counts.items())],
         "",
     ]
+    if dataset_counts:
+        lines.extend([
+            "## Dataset distribution", "",
+            *[f"- {name}: {count} task(s)" for name, count in sorted(dataset_counts.items())],
+            "",
+        ])
+    if level_counts:
+        lines.extend([
+            "## Level distribution", "",
+            *[f"- Level {lvl}: {count} task(s)" for lvl, count in sorted(level_counts.items())],
+            "",
+        ])
+    lines.extend([
+        "## Operator distribution", "",
+        *[f"- {name}: {count}" for name, count in sorted(operator_counts.items())],
+        "",
+    ])
 
     path.write_text("\n".join(lines), encoding="utf-8")
 

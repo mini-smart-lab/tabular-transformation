@@ -1,0 +1,213 @@
+{
+  "description": "Multi-domain benchmark dataset suite for Tabular Transformation Discovery",
+  "created_at": "2026-10-11T23:43:52.636403",
+  "datasets": {
+    "california_housing": {
+      "filename": "california_housing.csv",
+      "domain": "Real Estate / Economics",
+      "description": "Census data on California housing blocks with continuous economic & geospatial features",
+      "n_rows": 20640,
+      "n_cols": 9,
+      "columns": [
+        "medinc",
+        "houseage",
+        "averooms",
+        "avebedrms",
+        "population",
+        "aveoccup",
+        "latitude",
+        "longitude",
+        "medhouseval"
+      ],
+      "mean_skewness": 17.493682978146254,
+      "max_skewness": 97.63956096369486
+    },
+    "diabetes": {
+      "filename": "diabetes.csv",
+      "domain": "Biomedical / Clinical Medicine",
+      "description": "Ten baseline blood serum, physiological, and demographic measurements of diabetes patients",
+      "n_rows": 442,
+      "n_cols": 11,
+      "columns": [
+        "age",
+        "sex",
+        "bmi",
+        "bp",
+        "s1",
+        "s2",
+        "s3",
+        "s4",
+        "s5",
+        "s6",
+        "target"
+      ],
+      "mean_skewness": 0.37039744595822816,
+      "max_skewness": 0.7992551183440645
+    },
+    "breast_cancer": {
+      "filename": "breast_cancer.csv",
+      "domain": "Oncology / Pathology",
+      "description": "Wisconsin diagnostic breast cancer database with 30 collinear morphologic cell features",
+      "n_rows": 569,
+      "n_cols": 31,
+      "columns": [
+        "mean_radius",
+        "mean_texture",
+        "mean_perimeter",
+        "mean_area",
+        "mean_smoothness",
+        "mean_compactness",
+        "mean_concavity",
+        "mean_concave_points",
+        "mean_symmetry",
+        "mean_fractal_dimension",
+        "radius_error",
+        "texture_error",
+        "perimeter_error",
+        "area_error",
+        "smoothness_error",
+        "compactness_error",
+        "concavity_error",
+        "concave_points_error",
+        "symmetry_error",
+        "fractal_dimension_error",
+        "worst_radius",
+        "worst_texture",
+        "worst_perimeter",
+        "worst_area",
+        "worst_smoothness",
+        "worst_compactness",
+        "worst_concavity",
+        "worst_concave_points",
+        "worst_symmetry",
+        "worst_fractal_dimension",
+        "target"
+      ],
+      "mean_skewness": 1.667217408852414,
+      "max_skewness": 5.447186284898394
+    },
+    "wine_quality": {
+      "filename": "wine_quality.csv",
+      "domain": "Food Chemistry / Agriculture",
+      "description": "Chemical analysis of Italian wines grown across three cultivars",
+      "n_rows": 178,
+      "n_cols": 14,
+      "columns": [
+        "alcohol",
+        "malic_acid",
+        "ash",
+        "alcalinity_of_ash",
+        "magnesium",
+        "total_phenols",
+        "flavanoids",
+        "nonflavanoid_phenols",
+        "proanthocyanins",
+        "color_intensity",
+        "hue",
+        "od280_od315_of_diluted_wines",
+        "proline",
+        "target"
+      ],
+      "mean_skewness": 0.33283011450312083,
+      "max_skewness": 1.098191054755161
+    },
+    "banknote_authentication": {
+      "filename": "banknote_authentication.csv",
+      "domain": "Signal Processing / Security",
+      "description": "Continuous wavelet transform moments extracted from banknote evaluation images",
+      "n_rows": 1372,
+      "n_cols": 4,
+      "columns": [
+        "v1",
+        "v2",
+        "v3",
+        "v4"
+      ],
+      "mean_skewness": -0.11929141888617062,
+      "max_skewness": 1.0885685435217802
+    },
+    "airfoil_self_noise": {
+      "filename": "airfoil_self_noise.csv",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "description": "NASA aerodynamic wind tunnel noise measurements with non-linear frequency and angle dynamics",
+      "n_rows": 1503,
+      "n_cols": 6,
+      "columns": [
+        "frequency",
+        "angle",
+        "length",
+        "velocity",
+        "thickness",
+        "pressure"
+      ],
+      "mean_skewness": 0.8004618334676367,
+      "max_skewness": 2.1370843370561032
+    },
+    "concrete_strength": {
+      "filename": "concrete_strength.csv",
+      "domain": "Civil Engineering / Materials Science",
+      "description": "Compressive strength of high-performance concrete mixtures vs constituent ingredient proportions",
+      "n_rows": 1030,
+      "n_cols": 9,
+      "columns": [
+        "cement",
+        "blast_furnace_slag",
+        "fly_ash",
+        "water",
+        "superplasticizer",
+        "coarse_aggregate",
+        "fine_aggregate",
+        "age",
+        "strength"
+      ],
+      "mean_skewness": 0.6914500650916904,
+      "max_skewness": 3.26917740063459
+    },
+    "cpu_small": {
+      "filename": "cpu_small.csv",
+      "domain": "Computer Systems / Telemetry",
+      "description": "Operating system process and hardware activity measurements in high-load server environments",
+      "n_rows": 8192,
+      "n_cols": 13,
+      "columns": [
+        "lread",
+        "lwrite",
+        "scall",
+        "sread",
+        "swrite",
+        "fork",
+        "exec",
+        "rchar",
+        "wchar",
+        "runqsz",
+        "freemem",
+        "freeswap",
+        "usr"
+      ],
+      "mean_skewness": 4.421146606963542,
+      "max_skewness": 13.897852242774917
+    },
+    "synthetic_baseline": {
+      "filename": "synthetic_baseline.csv",
+      "domain": "Synthetic / Quantitative Finance",
+      "description": "Original synthetic tabular dataset with 10 numeric features used in pilot studies",
+      "n_rows": 247435,
+      "n_cols": 11,
+      "columns": [
+        "id",
+        "col_1",
+        "col_2",
+        "col_3",
+        "col_4",
+        "col_5",
+        "col_6",
+        "col_7",
+        "col_8",
+        "col_9",
+        "col_10"
+      ],
+      "mean_skewness": 0.08923220179369404,
+      "max_skewness": 2.2838366170289905
+    }
+  }
+}

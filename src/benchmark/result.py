@@ -35,6 +35,9 @@ class EvaluationResult(ResultModel):
 class BenchmarkResult(ResultModel):
     run_id: str
     task_id: str
+    level: int | None = None
+    source_dataset: str | None = None
+    domain: str | None = None
     status: str
     termination_reason: str
     submission: FinalSubmission | None

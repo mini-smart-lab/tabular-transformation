@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import random
 from pathlib import Path
 from typing import Any
@@ -145,6 +146,8 @@ def build_task(
     train_fraction: float = 0.7,
     operator_names: list[str] | None = None,
     allow_chaining: bool = True,
+    source_dataset: str | None = None,
+    domain: str | None = None,
 ) -> list[dict[str, Any]]:
     """Build a benchmark task matching specified difficulty level (0=atomic, 1 to 5)."""
     if not 0 < train_fraction < 1:
@@ -349,11 +352,124 @@ def build_task(
         "level": level,
         "transformations": task_transforms,
     }
+    if source_dataset:
+        config_data["source_dataset"] = source_dataset
+    if domain:
+        config_data["domain"] = domain
+
     (output / "config.yaml").write_text(
         yaml.safe_dump(config_data, sort_keys=False),
         encoding="utf-8",
     )
     return task_transforms
+
+
+def build_multidataset_suite(
+    source_input: Path | str | list[Path | str],
+    output_directory: Path | str,
+    *,
+    levels: list[int] | None = None,
+    task_count: int = 24,
+    seed: int = 42,
+    train_fraction: float = 0.7,
+    rows_per_task: int = 10_000,
+    operator_names: list[str] | None = None,
+    dataset_filter: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """Build a balanced benchmark suite spanning multiple source datasets and difficulty levels."""
+    output_path = Path(output_directory)
+    output_path.mkdir(parents=True, exist_ok=True)
+
+    manifest_info: dict[str, dict[str, Any]] = {}
+    csv_paths: list[Path] = []
+
+    if isinstance(source_input, (list, tuple)):
+        csv_paths = [Path(p).resolve() for p in source_input]
+    else:
+        src_p = Path(source_input).resolve()
+        if src_p.is_dir():
+            manifest_file = src_p / "dataset_manifest.json"
+            if manifest_file.is_file():
+                try:
+                    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+                    manifest_info = manifest_data.get("datasets", {})
+                except Exception:
+                    manifest_info = {}
+            csv_paths = sorted(src_p.glob("*.csv"))
+        elif src_p.is_file():
+            csv_paths = [src_p]
+        else:
+            raise FileNotFoundError(f"source input does not exist: {src_p}")
+
+    if dataset_filter:
+        filter_stems = {f.lower().removesuffix(".csv") for f in dataset_filter}
+        csv_paths = [p for p in csv_paths if p.stem.lower() in filter_stems or p.name.lower() in filter_stems]
+
+    if not csv_paths:
+        raise ValueError("no valid CSV files found in source input")
+
+    target_levels = levels if levels is not None else [0, 1, 2, 3, 4, 5]
+    if not target_levels:
+        target_levels = [1]
+
+    datasets: list[dict[str, Any]] = []
+    for path in csv_paths:
+        df = pd.read_csv(path)
+        num_cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+        if len(num_cols) < 2:
+            continue
+        df = df[num_cols].dropna().reset_index(drop=True)
+        ds_name = path.stem
+        domain = manifest_info.get(ds_name, {}).get("domain", "General")
+        datasets.append({
+            "name": ds_name,
+            "path": path,
+            "domain": domain,
+            "frame": df,
+        })
+
+    if not datasets:
+        raise ValueError("none of the source datasets contain sufficient numeric data")
+
+    generated: list[dict[str, Any]] = []
+    num_datasets = len(datasets)
+    num_levels = len(target_levels)
+
+    for index in range(task_count):
+        ds_item = datasets[index % num_datasets]
+        lvl = target_levels[(index // num_datasets) % num_levels]
+        task_dir = output_path / str(index)
+        task_dir.mkdir(parents=True, exist_ok=True)
+
+        df_source = ds_item["frame"]
+        if rows_per_task > 0 and len(df_source) > rows_per_task:
+            task_frame = df_source.sample(
+                n=rows_per_task, random_state=seed + index, replace=False
+            ).reset_index(drop=True)
+        else:
+            task_frame = df_source.copy()
+
+        transforms = build_task(
+            task_frame,
+            task_dir,
+            level=lvl,
+            seed=seed + index,
+            train_fraction=train_fraction,
+            operator_names=operator_names,
+            source_dataset=ds_item["name"],
+            domain=ds_item["domain"],
+        )
+
+        generated.append({
+            "task_id": str(index),
+            "source_dataset": ds_item["name"],
+            "domain": ds_item["domain"],
+            "level": lvl,
+            "seed": seed + index,
+            "transformations": transforms,
+        })
+
+    return generated
 
 
 def _main() -> None:
