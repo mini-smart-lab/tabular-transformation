@@ -99,7 +99,9 @@ class BenchmarkRunner:
             try:
                 state = normalize_terminal_state(episode.invoke())
             except Exception as exc:
-                logger.record("discovery_error", error_type=type(exc).__name__, error=str(exc))
+                import traceback
+                tb_str = traceback.format_exc()
+                logger.record("discovery_error", error_type=type(exc).__name__, error=str(exc), traceback=tb_str)
                 state = episode.initial_state()
                 state["status"] = "failed"
                 state["termination_reason"] = f"discovery_error:{type(exc).__name__}"

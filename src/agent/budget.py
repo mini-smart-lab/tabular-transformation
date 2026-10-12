@@ -67,6 +67,28 @@ class BudgetManager:
     def can_run_python(self) -> bool:
         return not self.check().exhausted
 
+    def consumption_ratio(self) -> float:
+        token_ratio = self.total_tokens / max(1, self.config.max_total_tokens)
+        calls_ratio = self.tool_calls / max(1, self.config.max_tool_calls)
+        time_ratio = self.wall_time_seconds / max(1, self.config.max_wall_time_seconds)
+        return max(token_ratio, calls_ratio, time_ratio)
+
+    def get_budget_status_message(self) -> str:
+        pct = self.consumption_ratio() * 100
+        msg = (
+            f"Budget consumed: {pct:.1f}% "
+            f"({self.tool_calls}/{self.config.max_tool_calls} tool calls, "
+            f"~{self.total_tokens:,}/{self.config.max_total_tokens:,} tokens, "
+            f"{self.wall_time_seconds:.1f}s/{self.config.max_wall_time_seconds:.1f}s wall time)"
+        )
+        if pct >= 70.0:
+            msg += (
+                f"\n[CRITICAL BUDGET ALERT - {pct:.1f}% EXPENDED]: You are approaching hard termination! "
+                "Per your instructions, prioritize submitting your best discovered transform(df) script IMMEDIATELY "
+                "via `submit_solution`. Do NOT run more exploratory python calls or the episode will abort with 0.0 penalty!"
+            )
+        return msg
+
     def snapshot(self) -> dict[str, int | float]:
         return {
             "input_tokens": self.input_tokens,
@@ -77,3 +99,4 @@ class BudgetManager:
             "cpu_time_seconds": self.cpu_time_seconds,
             "wall_time_seconds": self.wall_time_seconds,
         }
+

@@ -43,6 +43,10 @@ def parse_args() -> argparse.Namespace:
         help="Directory of source numeric CSVs (e.g. data/source_datasets). If specified or if --source is a directory, runs in multi-dataset mode.",
     )
     parser.add_argument(
+        "--tasks-dir", type=Path, default=None,
+        help="Path to an existing benchmark tasks directory (e.g. data/benchmark_24tasks). If provided, reuses these exact tasks instead of regenerating them.",
+    )
+    parser.add_argument(
         "--model-config", type=Path, default=Path("configs/nvidia.yaml"),
         help="Model configuration (default: configs/nvidia.yaml)",
     )
@@ -133,7 +137,34 @@ def main() -> int:
     for path in paths.values():
         path.mkdir(parents=True, exist_ok=True)
 
-    if is_multi:
+    if args.tasks_dir:
+        import shutil
+        if not args.tasks_dir.is_dir():
+            raise FileNotFoundError(f"tasks directory not found: {args.tasks_dir}")
+        shutil.copytree(args.tasks_dir, paths["tasks"], dirs_exist_ok=True)
+        manifest_src = args.tasks_dir / "suite_manifest.json"
+        if not manifest_src.exists():
+            manifest_src = args.tasks_dir / "manifest.json"
+        if manifest_src.exists():
+            with open(manifest_src, "r", encoding="utf-8") as f:
+                suite_meta = json.load(f)
+            generated = suite_meta.get("tasks", [])
+        else:
+            from src.benchmark.task import Task
+            generated = []
+            for t_dir in sorted(paths["tasks"].iterdir(), key=lambda p: int(p.name) if p.name.isdigit() else 999):
+                if t_dir.is_dir() and (t_dir / "config.yaml").exists():
+                    t_obj = Task.from_directory(t_dir)
+                    generated.append({
+                        "task_id": t_dir.name,
+                        "source_dataset": t_obj.source_dataset or "unknown",
+                        "level": t_obj.level,
+                        "transformations": [tr.model_dump() for tr in t_obj.transformations],
+                    })
+        source_desc = f"reused:{args.tasks_dir}"
+        source_rows = sum(len(pd.read_csv(paths["tasks"] / t["task_id"] / "train_before.csv")) for t in generated)
+        source_columns = []
+    elif is_multi:
         if not source_dir.is_dir():
             raise FileNotFoundError(f"source directory not found: {source_dir}")
         generated = build_multidataset_suite(

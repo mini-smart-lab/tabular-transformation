@@ -88,7 +88,15 @@ class DiscoveryGraph:
         budget_status = self.budget.check()
         if budget_status.exhausted:
             return self._budget_update(budget_status.reason)
-        response = self.model.invoke([self.system_message, *state["messages"]])
+        try:
+            response = self.model.invoke([self.system_message, *state["messages"]])
+        except Exception as exc:
+            self.logger.record("model_error", error_type=type(exc).__name__, error=str(exc))
+            return {
+                "status": "failed",
+                "termination_reason": f"model_error:{type(exc).__name__}",
+                **self._counter_update(),
+            }
         input_tokens, output_tokens = extract_token_usage(response)
         self.budget.record_llm_usage(input_tokens, output_tokens)
         turn = state["turn_index"] + 1
@@ -114,8 +122,15 @@ class DiscoveryGraph:
         observations: list[ToolMessage] = []
         status: str = "running"
         reason = ""
-        for call in getattr(message, "tool_calls", []):
-            name = call.get("name", "")
+        raw_calls = getattr(message, "tool_calls", []) or []
+        for call in raw_calls:
+            if not isinstance(call, dict):
+                continue
+            name = call.get("name") or ""
+            args = call.get("args") or {}
+            if not isinstance(args, dict):
+                args = {}
+            call_id = call.get("id") or name or "unknown"
             self.budget.record_tool_call()
             try:
                 if self.budget.tool_calls > self.budget.config.max_tool_calls:
@@ -123,22 +138,20 @@ class DiscoveryGraph:
                 elif name not in self.tools.by_name:
                     result = {"status": "error", "stderr": f"unknown tool: {name}"}
                 else:
-                    result = self.tools.by_name[name].invoke(call.get("args", {}))
+                    result = self.tools.by_name[name].invoke(args)
             except Exception as exc:
                 result = {"status": "error", "stderr": f"invalid tool call: {exc}"}
 
+            budget_msg = self.budget.get_budget_status_message()
             if isinstance(result, dict) and result.get("content_type") == "image" and result.get("status") == "success":
                 tool_content: Any = [
-                    {"type": "text", "text": f"Image file '{result.get('path')}' loaded ({result.get('size_bytes', 0)} bytes) [Budget: {self.budget.tool_calls}/{self.budget.config.max_tool_calls} calls, ~{self.budget.total_tokens:,}/{self.budget.config.max_total_tokens:,} tokens used]:"},
+                    {"type": "text", "text": f"Image file '{result.get('path')}' loaded ({result.get('size_bytes', 0)} bytes). {budget_msg}:"},
                     {"type": "image_url", "image_url": {"url": result.get("data_url")}},
                 ]
             else:
                 if isinstance(result, dict):
                     result_payload = dict(result)
-                    result_payload["budget_status"] = (
-                        f"{self.budget.tool_calls}/{self.budget.config.max_tool_calls} tool calls used, "
-                        f"~{self.budget.total_tokens:,}/{self.budget.config.max_total_tokens:,} tokens consumed"
-                    )
+                    result_payload["budget_status"] = budget_msg
                     tool_content = json.dumps(result_payload, default=str)
                 else:
                     tool_content = json.dumps(result, default=str)
@@ -146,7 +159,7 @@ class DiscoveryGraph:
             observations.append(
                 ToolMessage(
                     content=tool_content,
-                    tool_call_id=call.get("id", name or "unknown"),
+                    tool_call_id=call_id,
                     name=name or "unknown",
                 )
             )
@@ -173,7 +186,8 @@ class DiscoveryGraph:
         if state["status"] != "running":
             return "end"
         last = state["messages"][-1]
-        if getattr(last, "tool_calls", []):
+        calls = [c for c in (getattr(last, "tool_calls", []) or []) if isinstance(c, dict)]
+        if calls:
             return "tools"
         return "end"
 

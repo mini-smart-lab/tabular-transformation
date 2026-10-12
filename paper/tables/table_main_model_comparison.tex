@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\centering
+\small
+\caption{Comparative Evaluation of Frontier Agent, Lightweight Model, and Classical Baseline across 6 Structural Complexity Classes ($N=24$ Tasks, 8 Domains).}
+\label{tab:main_model_comparison}
+\begin{tabular}{llcccccccccc}
+\toprule
+\multirow{2}{*}{\textbf{Model}} & \multirow{2}{*}{\textbf{Paradigm}} & \textbf{Sub.} & \textbf{Trans.} & \textbf{Func.} & \textbf{Op.} & \multicolumn{6}{c}{\textbf{Transformed Col. Accuracy by Complexity Class}} \\
+\cmidrule(lr){7-12}
+ & & \textbf{Rate} & \textbf{Acc.} & \textbf{Acc.} & \textbf{F1} & \textbf{C0} & \textbf{C1} & \textbf{C2} & \textbf{C3} & \textbf{C4} & \textbf{C5} \\
+\midrule
+Gemini 3 Flash (Google) & Frontier Multimodal Agent & 54.2\% & 0.923 & 0.972 & 0.861 & 1.000 & 1.000 & 1.000 & 0.500 & 1.000 & 1.000 \\
+GPT-5.4 Nano (OpenAI) & Lightweight Edge Model & 100.0\% & 0.524 & 0.816 & 0.400 & 1.000 & 0.875 & 0.333 & 0.312 & 0.375 & 0.250 \\
+Symbolic Enumeration & Combinatorial Brute Force & 100.0\% & 0.653 & 0.876 & 0.872 & 0.750 & 0.750 & 0.667 & 0.562 & 0.812 & 0.375 \\
+\bottomrule
+\end{tabular}
+\end{table*}

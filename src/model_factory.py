@@ -80,6 +80,20 @@ def _build_brute_force(config: ModelConfig, api_key: str) -> Any:
 def _build_kaggle_proxy(config: ModelConfig, api_key: str) -> Any:
     try:
         from langchain_openai import ChatOpenAI
+        import langchain_openai.chat_models.base as lc_openai_base
+        from langchain_core.messages import AIMessage
+
+        # Patch against null message choices returned by proxy endpoints
+        if not getattr(lc_openai_base, "_safe_message_patch_applied", False):
+            _orig_convert = lc_openai_base._convert_dict_to_message
+
+            def _safe_convert(d: Any) -> Any:
+                if d is None:
+                    return AIMessage(content="[Empty message from proxy endpoint]")
+                return _orig_convert(d)
+
+            lc_openai_base._convert_dict_to_message = _safe_convert
+            lc_openai_base._safe_message_patch_applied = True
     except ImportError as exc:
         raise RuntimeError("provider 'kaggle_proxy' requires langchain-openai package") from exc
     base_url = os.getenv("MODEL_PROXY_URL_OPENAPI", "https://mp-staging.kaggle.net/models/openapi")

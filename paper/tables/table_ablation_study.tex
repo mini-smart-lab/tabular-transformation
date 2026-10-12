@@ -1,0 +1,19 @@
+\begin{table*}[t]
+\centering
+\caption{Ablation Study on Gemini 3 Flash: Disentangling Discovery Hypothesis Search from Interactive Sandbox Feedback and Code Synthesis ($N=24$).}
+\label{tab:ablation_study}
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Ablation Condition} & \textbf{Submissions} & \textbf{Transformed Acc.} & \textbf{Functional Acc.} & \textbf{Operator F1} & \textbf{Exact Seq.} \\
+\midrule
+Direct Symbolic Generation (No Tools) & 14/24 & 0.036 & 0.639 & 0.000 & 0.000 \\
+\multicolumn{6}{p{0.92\textwidth}}{\footnotesize \textit{Pure LLM parametric knowledge; no sandbox code execution}} \\
+\midrule
+Standard Interactive Discovery (Full Agent) & 13/24 & 0.923 & 0.972 & 0.861 & 0.801 \\
+\multicolumn{6}{p{0.92\textwidth}}{\footnotesize \textit{Two-tier sandbox with iterative hypothesis testing via run_python}} \\
+\midrule
+Oracle Operators Revealed (Synthesis Only) & 16/24 & 1.000 & 1.000 & 1.000 & 1.000 \\
+\multicolumn{6}{p{0.92\textwidth}}{\footnotesize \textit{Ground-truth operator names revealed; isolates code synthesis}} \\
+\bottomrule
+\end{tabular}
+\end{table*}

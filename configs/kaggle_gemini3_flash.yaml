@@ -1,0 +1,6 @@
+provider: kaggle_proxy
+model: google/gemini-3-flash-preview
+temperature: 0.0
+seed: 42
+api_key_env: MODEL_PROXY_API_KEY
+max_output_tokens: 4096

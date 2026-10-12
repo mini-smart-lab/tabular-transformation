@@ -5,7 +5,9 @@ results/
 logs/
 pipeline_runs/
 archive/
-paper/
+paper/*
+!paper/tables/
+!paper/tables/**
 
 .pytest_cache
 *.pyc
@@ -13,3 +15,4 @@ idea.txt
 .env
 task.md
 note.txt
+data/benchmark_24tasks/
