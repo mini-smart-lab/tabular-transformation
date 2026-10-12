@@ -27,13 +27,19 @@ class DiscoveryGraph:
         sandbox_config: SandboxConfig | None = None,
         operator_vocabulary: list[str] | None = None,
         provider_model: str = "unknown",
+        enable_code_execution: bool = True,
+        oracle_transformations: list[Any] | None = None,
     ) -> None:
         self.budget = budget
         self.logger = logger
         self.provider_model = provider_model
         resolved_sandbox_config = sandbox_config or SandboxConfig()
         self.tools = AgentTools(
-            sandbox, budget, logger, resolved_sandbox_config
+            sandbox,
+            budget,
+            logger,
+            resolved_sandbox_config,
+            enable_code_execution=enable_code_execution,
         )
         self.model = model.bind_tools(self.tools.langchain_tools)
         self.system_message = SystemMessage(
@@ -41,9 +47,12 @@ class DiscoveryGraph:
                 operator_vocabulary=operator_vocabulary or [],
                 budget_config=budget.config,
                 sandbox_config=resolved_sandbox_config,
+                oracle_transformations=oracle_transformations,
+                no_tools=not enable_code_execution,
             )
         )
         self.graph = self._build()
+
 
     def _build(self):
         builder = StateGraph(AgentState)

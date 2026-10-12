@@ -17,8 +17,9 @@ def aggregate_results(result_directory: Path | str, output_csv: Path | str) -> p
         rows.append({
             "run_id": result.get("run_id"), "task_id": result.get("task_id"),
             "level": result.get("level"), "source_dataset": result.get("source_dataset"),
-            "domain": result.get("domain"),
+            "domain": result.get("domain"), "ablation_mode": result.get("ablation_mode", "standard"),
             "status": result.get("status"), "termination_reason": result.get("termination_reason"),
+
             "functional_column_accuracy": evaluation.get("functional_column_accuracy"),
             "transformed_column_accuracy": evaluation.get("transformed_column_accuracy"),
             "operator_precision": operators.get("precision"),

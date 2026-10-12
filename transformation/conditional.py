@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 import numpy as np
 from transformation.base import Transformation
 from transformation.interaction import MultiColumnTransformation
@@ -25,7 +26,21 @@ class IndicatorZeroTransformation(Transformation):
 
 
 class IndicatorMeanTransformation(Transformation):
-    """1.0 if x > mean(x) else 0.0."""
+    """1.0 if x > mean(x) else 0.0.
+    
+    Mean threshold is fitted strictly on training data to prevent test leakage.
+    """
+
+    def __init__(self, mean_threshold: float | None = None):
+        self.mean_threshold = mean_threshold
+
+    def fit(self, data) -> "IndicatorMeanTransformation":
+        arr = np.asarray(data, dtype=float)
+        self.mean_threshold = float(np.mean(arr))
+        return self
+
+    def get_params(self) -> dict[str, Any]:
+        return {"threshold": self.mean_threshold}
 
     def is_applicable(self, data) -> bool:
         arr = np.asarray(data, dtype=float)
@@ -37,7 +52,8 @@ class IndicatorMeanTransformation(Transformation):
 
     def transform(self, data):
         arr = np.asarray(data, dtype=float)
-        return (arr > np.mean(arr)).astype(float)
+        thresh = self.mean_threshold if self.mean_threshold is not None else float(np.mean(arr))
+        return (arr > thresh).astype(float)
 
     def __str__(self):
         return "IndicatorMeanTransformation"
@@ -84,7 +100,21 @@ class PiecewiseLogTransformation(Transformation):
 
 
 class ConditionalInteractionTransformation(MultiColumnTransformation):
-    """col_a if col_a > mean(col_a) else col_b."""
+    """col_a if col_a > mean(col_a) else col_b.
+    
+    Condition threshold on col_a is fitted strictly on training data.
+    """
+
+    def __init__(self, threshold_a: float | None = None):
+        self.threshold_a = threshold_a
+
+    def fit_columns(self, data_a, data_b) -> "ConditionalInteractionTransformation":
+        arr_a = np.asarray(data_a, dtype=float)
+        self.threshold_a = float(np.mean(arr_a))
+        return self
+
+    def get_params(self) -> dict[str, Any]:
+        return {"threshold_a": self.threshold_a}
 
     def is_applicable_columns(self, data_a, data_b) -> bool:
         arr_a = np.asarray(data_a, dtype=float)
@@ -102,7 +132,8 @@ class ConditionalInteractionTransformation(MultiColumnTransformation):
     def transform_columns(self, data_a, data_b):
         arr_a = np.asarray(data_a, dtype=float)
         arr_b = np.asarray(data_b, dtype=float)
-        return np.where(arr_a > np.mean(arr_a), arr_a, arr_b)
+        thresh = self.threshold_a if self.threshold_a is not None else float(np.mean(arr_a))
+        return np.where(arr_a > thresh, arr_a, arr_b)
 
     def __str__(self):
         return "ConditionalInteractionTransformation"

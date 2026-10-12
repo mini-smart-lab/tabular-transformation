@@ -34,33 +34,41 @@ class AgentTools:
         budget: BudgetManager,
         logger: EpisodeLogger,
         sandbox_config: SandboxConfig,
+        *,
+        enable_code_execution: bool = True,
     ) -> None:
         self.sandbox = sandbox
         self.budget = budget
         self.logger = logger
         self.sandbox_config = sandbox_config
         self.final_submission: FinalSubmission | None = None
-        self.langchain_tools = [
-            StructuredTool.from_function(
-                self.run_python,
-                name="run_python",
-                description="Execute general Python code in the discovery sandbox.",
-                args_schema=RunPythonInput,
-            ),
-            StructuredTool.from_function(
-                self.read_image,
-                name="read_image",
-                description="Read an image or plot file (PNG, JPEG, SVG) saved in the sandbox workspace to inspect visual charts and relationships.",
-                args_schema=ReadImageInput,
-            ),
+        tools = []
+        if enable_code_execution:
+            tools.extend([
+                StructuredTool.from_function(
+                    self.run_python,
+                    name="run_python",
+                    description="Execute general Python code in the discovery sandbox.",
+                    args_schema=RunPythonInput,
+                ),
+                StructuredTool.from_function(
+                    self.read_image,
+                    name="read_image",
+                    description="Read an image or plot file (PNG, JPEG, SVG) saved in the sandbox workspace to inspect visual charts and relationships.",
+                    args_schema=ReadImageInput,
+                ),
+            ])
+        tools.append(
             StructuredTool.from_function(
                 self.submit_solution,
                 name="submit_solution",
                 description="Submit the final self-contained transform(df) script and operators.",
                 args_schema=SubmitSolutionInput,
-            ),
-        ]
+            )
+        )
+        self.langchain_tools = tools
         self.by_name = {tool.name: tool for tool in self.langchain_tools}
+
 
     def run_python(self, code: str) -> dict[str, Any]:
         if not self.budget.can_run_python():

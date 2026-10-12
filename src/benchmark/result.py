@@ -38,9 +38,11 @@ class BenchmarkResult(ResultModel):
     level: int | None = None
     source_dataset: str | None = None
     domain: str | None = None
+    ablation_mode: str | None = None
     status: str
     termination_reason: str
     submission: FinalSubmission | None
     budget: dict[str, int | float]
     evaluation: EvaluationResult | None
     transform_path: str | None = None
+

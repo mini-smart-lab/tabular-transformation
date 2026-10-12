@@ -20,6 +20,11 @@ from transformation import (
     SubtractInteractionTransformation,
     MultiplyInteractionTransformation,
     DivideInteractionTransformation,
+    IndicatorZeroTransformation,
+    IndicatorMeanTransformation,
+    ClipZeroTransformation,
+    PiecewiseLogTransformation,
+    ConditionalInteractionTransformation,
 )
 from src.benchmark.task_builder import build_task, ALL_OPERATORS
 from src.benchmark.task import load_task_directory
@@ -203,4 +208,63 @@ def test_conditional_transformations():
         budget = get_level_budget(lvl)
         assert budget.max_total_tokens >= 40_000
         assert budget.max_tool_calls >= 8
+
+
+def test_stateful_transformations_no_leakage(tmp_path):
+    # 1. StandardScaler: train stats must be retained for test
+    train_x = np.array([10.0, 20.0, 30.0])
+    test_x = np.array([40.0, 50.0])
+    std_op = StandardScalerTransformation()
+    std_op.fit(train_x)
+    assert std_op.get_params()["mean"] == 20.0
+    # On train
+    train_transformed = std_op.transform(train_x)
+    assert pytest.approx(float(np.mean(train_transformed))) == 0.0
+    # On test: uses train mean=20, not test mean=45
+    test_transformed = std_op.transform(test_x)
+    assert float(np.mean(test_transformed)) > 1.0  # (45 - 20) / std > 0
+
+    # 2. MinMaxScaler: train min/ptp must be retained for test
+    train_mm = np.array([0.0, 10.0])
+    test_mm = np.array([20.0, 30.0])
+    mm_op = MinMaxScalerTransformation()
+    mm_op.fit(train_mm)
+    assert mm_op.get_params()["min"] == 0.0
+    assert mm_op.get_params()["ptp"] == 10.0
+    test_mm_res = mm_op.transform(test_mm)
+    assert np.allclose(test_mm_res, [2.0, 3.0])
+
+    # 3. IndicatorMean: threshold must be train mean
+    train_ind = np.array([1.0, 2.0, 3.0])  # mean = 2.0
+    test_ind = np.array([1.5, 2.5])
+    ind_mean = IndicatorMeanTransformation()
+    ind_mean.fit(train_ind)
+    assert ind_mean.get_params()["threshold"] == 2.0
+    assert np.allclose(ind_mean.transform(test_ind), [0.0, 1.0])
+
+    # 4. ConditionalInteraction: threshold on col_a must be train mean
+    train_a = np.array([10.0, 20.0, 30.0])  # mean = 20.0
+    train_b = np.array([1.0, 1.0, 1.0])
+    test_a = np.array([15.0, 25.0])
+    test_b = np.array([9.0, 9.0])
+    cond_op = ConditionalInteractionTransformation()
+    cond_op.fit_columns(train_a, train_b)
+    assert cond_op.get_params()["threshold_a"] == 20.0
+    # test: 15.0 <= 20.0 -> test_b (9.0), 25.0 > 20.0 -> test_a (25.0)
+    assert np.allclose(cond_op.transform_columns(test_a, test_b), [9.0, 25.0])
+
+    # 5. Verify task builder outputs parameters to config.yaml
+    df = pd.DataFrame({
+        "f1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0],
+        "f2": [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0],
+        "f3": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+    })
+    out_dir = tmp_path / "task_out"
+    build_task(df, out_dir, level=1, seed=42)
+    task = load_task_directory(out_dir)
+    assert len(task.ground_truth_transformations) > 0
+    # Every transformation must have parameters recorded
+    for gt in task.ground_truth_transformations:
+        assert gt.parameters is not None
+        assert len(gt.parameters) == len(gt.operators)
 

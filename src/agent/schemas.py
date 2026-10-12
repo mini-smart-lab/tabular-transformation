@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -21,6 +22,7 @@ class Transformation(BaseModel):
     operators: list[str]
     source_columns: list[str] | None = None
     interaction: str | None = None
+    parameters: list[dict[str, Any]] | None = None
 
     @field_validator("operators")
     @classmethod

@@ -57,11 +57,23 @@ class BenchmarkRunner:
         budget: AgentBudgetConfig | None = None,
         *,
         provider_model: str = "unknown",
+        ablation_no_tools: bool = False,
+        ablation_oracle_ops: bool = False,
     ) -> BenchmarkResult:
         budget_manager = BudgetManager(budget or AgentBudgetConfig())
         run_id = uuid.uuid4().hex
         logger = EpisodeLogger(self.log_dir / f"{task.task_id}-{run_id}.jsonl")
-        logger.record("episode_start", run_id=run_id, task_id=task.task_id, provider_model=provider_model)
+        ablation_mode = (
+            "oracle_ops" if ablation_oracle_ops
+            else ("no_tools" if ablation_no_tools else "standard")
+        )
+        logger.record(
+            "episode_start",
+            run_id=run_id,
+            task_id=task.task_id,
+            provider_model=provider_model,
+            ablation_mode=ablation_mode,
+        )
         discovery = self.discovery_sandbox_factory(task.discovery_files())
         state = None
         discovery.start()
@@ -74,12 +86,15 @@ class BenchmarkRunner:
                 sandbox_config=self.sandbox_config,
                 operator_vocabulary=self.operator_vocabulary,
                 provider_model=provider_model,
+                enable_code_execution=not ablation_no_tools,
+                oracle_transformations=task.ground_truth_transformations if ablation_oracle_ops else None,
             )
             logger.record(
                 "discovery_initialized",
                 budget=budget_manager.config.model_dump(),
                 sandbox=self.sandbox_config.model_dump(),
                 operator_vocabulary=self.operator_vocabulary,
+                ablation_mode=ablation_mode,
             )
             try:
                 state = normalize_terminal_state(episode.invoke())
@@ -110,6 +125,7 @@ class BenchmarkRunner:
             level=task.level,
             source_dataset=task.source_dataset,
             domain=task.domain,
+            ablation_mode=ablation_mode,
             status=state["status"],
             termination_reason=state["termination_reason"],
             submission=state["final_submission"],
@@ -133,13 +149,23 @@ class BenchmarkRunner:
         test_before_path: Path | str | None = None,
         test_after_path: Path | str | None = None,
         provider_model: str = "unknown",
+        ablation_no_tools: bool = False,
+        ablation_oracle_ops: bool = False,
     ) -> BenchmarkResult:
         task = load_task_directory(
             task_directory,
             test_before_path=test_before_path,
             test_after_path=test_after_path,
         )
-        return self.run(task, model, budget, provider_model=provider_model)
+        return self.run(
+            task,
+            model,
+            budget,
+            provider_model=provider_model,
+            ablation_no_tools=ablation_no_tools,
+            ablation_oracle_ops=ablation_oracle_ops,
+        )
+
 
 
 def _main() -> None:

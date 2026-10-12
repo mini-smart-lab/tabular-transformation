@@ -1,7 +1,19 @@
-from transformation.base import Transformation
+from __future__ import annotations
+
+from typing import Any
 import numpy as np
+from transformation.base import Transformation
+
 
 class MultiColumnTransformation(Transformation):
+    def fit_columns(self, data_a, data_b) -> "MultiColumnTransformation":
+        """Fit any parameters on the training column pair. Default is no-op."""
+        return self
+
+    def fit_transform_columns(self, data_a, data_b):
+        """Fit parameters and transform column pair."""
+        return self.fit_columns(data_a, data_b).transform_columns(data_a, data_b)
+
     def is_applicable_columns(self, data_a, data_b):
         """Check whether interaction between two columns produces valid finite output."""
         try:

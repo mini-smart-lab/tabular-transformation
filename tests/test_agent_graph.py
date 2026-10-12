@@ -172,3 +172,85 @@ def test_budget_prompt_and_tool_feedback(tmp_path):
     assert "9 calls" in model.passed_system_message
     assert "budget_status" in model.received_tool_message
 
+
+def test_graph_ablation_no_tools(tmp_path):
+    class NoToolsModel:
+        def bind_tools(self, tools):
+            assert len(tools) == 1
+            assert tools[0].name == "submit_solution"
+            return self
+
+        def invoke(self, messages):
+            assert "DIRECT GENERATION ABLATION MODE" in messages[0].content
+            resp = AIMessage(
+                content="",
+                tool_calls=[{
+                    "name": "submit_solution",
+                    "args": {
+                        "script": SCRIPT,
+                        "transformations": [{"column": "x", "operators": ["square"]}],
+                    },
+                    "id": "sub1",
+                }],
+            )
+            resp.usage_metadata = {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
+            return resp
+
+    sandbox = LocalMockSandbox([])
+    budget = BudgetManager(AgentBudgetConfig())
+    episode = DiscoveryGraph(
+        NoToolsModel(),
+        sandbox,
+        budget,
+        EpisodeLogger(tmp_path / "ep_no_tools.jsonl"),
+        enable_code_execution=False,
+    )
+    state = normalize_terminal_state(episode.invoke())
+    assert state["status"] == "submitted"
+    assert state["tool_calls"] == 1
+    assert len(sandbox.executed_code) == 0
+
+
+def test_graph_ablation_oracle_ops(tmp_path):
+    class OracleModel:
+        def __init__(self):
+            self.sys_prompt = ""
+
+        def bind_tools(self, tools):
+            return self
+
+        def invoke(self, messages):
+            self.sys_prompt = messages[0].content
+            resp = AIMessage(
+                content="",
+                tool_calls=[{
+                    "name": "submit_solution",
+                    "args": {
+                        "script": SCRIPT,
+                        "transformations": [{"column": "target", "operators": ["SquareTransformation"]}],
+                    },
+                    "id": "sub2",
+                }],
+            )
+            resp.usage_metadata = {"input_tokens": 10, "output_tokens": 5, "total_tokens": 15}
+            return resp
+
+    from src.agent.schemas import Transformation
+    sandbox = LocalMockSandbox([])
+    budget = BudgetManager(AgentBudgetConfig())
+    oracle_ops = [Transformation(column="target", operators=["SquareTransformation"])]
+    model = OracleModel()
+    episode = DiscoveryGraph(
+        model,
+        sandbox,
+        budget,
+        EpisodeLogger(tmp_path / "ep_oracle.jsonl"),
+        oracle_transformations=oracle_ops,
+    )
+    state = normalize_terminal_state(episode.invoke())
+    assert state["status"] == "submitted"
+    assert "ORACLE OPERATOR ABLATION MODE" in model.sys_prompt
+    assert "target" in model.sys_prompt
+    assert "SquareTransformation" in model.sys_prompt
+
+

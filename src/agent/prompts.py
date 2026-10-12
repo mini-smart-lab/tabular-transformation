@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from src.agent.schemas import Transformation
 
 SYSTEM_PROMPT = """You are discovering hidden tabular transformations between before.csv and after.csv.
 
@@ -10,11 +11,17 @@ Transformations can be:
 - Independent unary operations (single, chained/nested, piecewise, indicator, or thresholding)
 - Dependent multi-column interactions (such as arithmetic operations or conditional selection across columns)
 
-HARD BUDGET CONSTRAINTS FOR THIS EPISODE:
+COMPLEXITY-AWARE HARD BUDGET CONSTRAINTS FOR THIS EPISODE:
 - Max Total Tokens (Input + Output): {max_tokens} tokens
 - Max Tool Calls: {max_tool_calls} calls
 - Max Episode Wall-Time: {max_wall_time}s (execution timeout: {execution_timeout}s per code run)
 - Max CPU Time: {max_cpu_time}s
+
+METHODOLOGICAL NOTE (STATEFUL TRANSFORMATIONS & DATA LEAKAGE PREVENTION):
+For stateful/parametric transformations (StandardScaler, MinMaxScaler, IndicatorMean, ConditionalInteraction),
+the transformation parameters (mean, std, min, ptp, threshold) are fitted strictly on before.csv
+to eliminate data leakage, and applied to test data with frozen train parameters. Embed or hardcode
+the fitted scalar constants into your `transform(df)` script.
 
 Follow this systematic, token-efficient workflow to discover the exact transformations within your budget:
 
@@ -42,13 +49,16 @@ Follow this systematic, token-efficient workflow to discover the exact transform
    - RISK MANAGEMENT: If you have consumed > 70% of your tool calls or token budget, do NOT continue guessing indefinitely. Prioritize submitting your best discovered `transform(df)` immediately. A partially solved submission earns credit for the correct columns, whereas exceeding the budget terminates the episode with an automatic 0.0 penalty.
    - The submission script must define exactly `def transform(df: pd.DataFrame) -> pd.DataFrame:`, return a DataFrame with matching shape and column names, and be fully self-contained (no reading files, no network).
    - Report canonical, ordered operator names per transformed column.
-"""
+{ablation_section}"""
 
 
 def build_system_prompt(
     operator_vocabulary: list[str] | None = None,
     budget_config: Any = None,
     sandbox_config: Any = None,
+    *,
+    oracle_transformations: list[Transformation] | None = None,
+    no_tools: bool = False,
 ) -> str:
     operators = ", ".join(operator_vocabulary) if operator_vocabulary else "(not disclosed)"
     max_tokens = f"{budget_config.max_total_tokens:,}" if budget_config else "100,000"
@@ -57,6 +67,25 @@ def build_system_prompt(
     max_cpu_time = str(int(budget_config.max_total_cpu_seconds)) if budget_config else "120"
     execution_timeout = str(int(sandbox_config.execution_timeout_seconds)) if sandbox_config else "15"
 
+    ablation_parts: list[str] = []
+    if oracle_transformations:
+        oracle_text = "\n=== ORACLE OPERATOR ABLATION MODE (GROUND-TRUTH REVEALED) ===\n" \
+                      "For this ablation study, the ground-truth transformations are provided to you:\n"
+        for t in oracle_transformations:
+            src_str = f", source_columns={t.source_columns}" if t.source_columns else ""
+            inter_str = f", interaction={t.interaction}" if t.interaction else ""
+            oracle_text += f"- Column '{t.column}': operators={t.operators}{src_str}{inter_str}\n"
+        oracle_text += "Synthesize the exact Python transform(df) script implementing these transformations."
+        ablation_parts.append(oracle_text)
+
+    if no_tools:
+        no_tools_text = "\n=== DIRECT GENERATION ABLATION MODE (NO CODE EXECUTION TOOLS) ===\n" \
+                        "You do NOT have access to run_python or read_image tools in this run.\n" \
+                        "Perform direct symbolic reasoning and immediately call submit_solution in this single turn."
+        ablation_parts.append(no_tools_text)
+
+    ablation_section = "\n".join(ablation_parts)
+
     return SYSTEM_PROMPT.format(
         operators=operators,
         max_tokens=max_tokens,
@@ -64,4 +93,5 @@ def build_system_prompt(
         max_wall_time=max_wall_time,
         max_cpu_time=max_cpu_time,
         execution_timeout=execution_timeout,
+        ablation_section=ablation_section,
     )

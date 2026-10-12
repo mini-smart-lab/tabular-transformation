@@ -307,46 +307,80 @@ def build_task(
     train_before = frame.iloc[indices[:split]].reset_index(drop=True)
     test_before = frame.iloc[indices[split:]].reset_index(drop=True)
 
-    def apply_transforms(source: pd.DataFrame) -> pd.DataFrame:
+    # Fit operators strictly on train_before to eliminate data leakage.
+    # Parameters (e.g. mean, std, min, ptp, thresholds) are recorded in task metadata.
+    fitted_unaries: dict[str, list[Any]] = {}
+    fitted_interactions: dict[str, tuple[Any, list[Any]]] = {}
+
+    for item in task_transforms:
+        col = item["column"]
+        srcs = item.get("source_columns")
+        if srcs and len(srcs) == 2:
+            s_a, s_b = srcs
+            op_name = item["operators"][0]
+            op_inst = INTERACTION_OPERATORS[op_name]()
+            op_inst.fit_columns(train_before[s_a].to_numpy(), train_before[s_b].to_numpy())
+            inter_val = op_inst.transform_columns(train_before[s_a].to_numpy(), train_before[s_b].to_numpy())
+            params_list = [op_inst.get_params()]
+            unary_insts: list[Any] = []
+            if len(item["operators"]) > 1:
+                for u_name in item["operators"][1:]:
+                    u_inst = OPERATORS[u_name]()
+                    u_inst.fit(inter_val)
+                    inter_val = u_inst.transform(inter_val)
+                    params_list.append(u_inst.get_params())
+                    unary_insts.append(u_inst)
+            fitted_interactions[col] = (op_inst, unary_insts)
+            item["parameters"] = params_list
+        else:
+            val = train_before[col].to_numpy()
+            u_insts: list[Any] = []
+            params_list = []
+            for op_name in item["operators"]:
+                op_inst = OPERATORS[op_name]()
+                op_inst.fit(val)
+                val = op_inst.transform(val)
+                params_list.append(op_inst.get_params())
+                u_insts.append(op_inst)
+            fitted_unaries[col] = u_insts
+            item["parameters"] = params_list
+
+    def apply_fitted_transforms(source: pd.DataFrame) -> pd.DataFrame:
         result = source.copy()
-        # Apply independent transformations first
+        # 1. Independent column transformations
         for item in task_transforms:
             col = item["column"]
             if item.get("source_columns"):
                 continue
             val = result[col].to_numpy()
-            for op_name in item["operators"]:
-                op = OPERATORS[op_name]()
-                val = op.transform(val)
+            for op_inst in fitted_unaries[col]:
+                val = op_inst.transform(val)
             result[col] = val
 
-        # Apply dependent interactions
+        # 2. Inter-column interactions
         for item in task_transforms:
             col = item["column"]
             srcs = item.get("source_columns")
             if not srcs or len(srcs) != 2:
                 continue
-            src_a, src_b = srcs
-            op_name = item["operators"][0]
-            op = INTERACTION_OPERATORS[op_name]()
-            res = op.transform_columns(source[src_a].to_numpy(), source[src_b].to_numpy())
-            if len(item["operators"]) > 1:
-                for u_name in item["operators"][1:]:
-                    res = OPERATORS[u_name]().transform(res)
+            s_a, s_b = srcs
+            op_inst, unary_insts = fitted_interactions[col]
+            res = op_inst.transform_columns(source[s_a].to_numpy(), source[s_b].to_numpy())
+            for u_inst in unary_insts:
+                res = u_inst.transform(res)
             result[col] = res
 
         if not np.isfinite(result.to_numpy(dtype=float)).all():
             raise ValueError("operators produced non-finite task output")
         return result
 
-
     output = Path(output_directory)
     hidden = output / "hidden"
     hidden.mkdir(parents=True, exist_ok=True)
     train_before.to_csv(output / "train_before.csv", index=False)
-    apply_transforms(train_before).to_csv(output / "train_after.csv", index=False)
+    apply_fitted_transforms(train_before).to_csv(output / "train_after.csv", index=False)
     test_before.to_csv(hidden / "test_before.csv", index=False)
-    apply_transforms(test_before).to_csv(hidden / "test_after.csv", index=False)
+    apply_fitted_transforms(test_before).to_csv(hidden / "test_after.csv", index=False)
 
     config_data = {
         "level": level,
@@ -437,8 +471,9 @@ def build_multidataset_suite(
 
     for index in range(task_count):
         ds_item = datasets[index % num_datasets]
-        lvl = target_levels[(index // num_datasets) % num_levels]
+        lvl = target_levels[index % num_levels]
         task_dir = output_path / str(index)
+
         task_dir.mkdir(parents=True, exist_ok=True)
 
         df_source = ds_item["frame"]

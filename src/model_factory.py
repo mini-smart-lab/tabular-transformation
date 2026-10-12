@@ -77,7 +77,27 @@ def _build_brute_force(config: ModelConfig, api_key: str) -> Any:
     return BruteForceModel(config=config)
 
 
+def _build_kaggle_proxy(config: ModelConfig, api_key: str) -> Any:
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise RuntimeError("provider 'kaggle_proxy' requires langchain-openai package") from exc
+    base_url = os.getenv("MODEL_PROXY_URL_OPENAPI", "https://mp-staging.kaggle.net/models/openapi")
+    effective_key = api_key or os.getenv("MODEL_PROXY_API_KEY", "")
+    kwargs: dict[str, Any] = dict(
+        model=config.model,
+        temperature=config.temperature,
+        api_key=effective_key,
+        base_url=base_url,
+        max_tokens=config.max_output_tokens,
+        max_retries=10,
+    )
+    return ChatOpenAI(**kwargs)
+
+
 register_provider("nvidia", _build_nvidia)
 register_provider("openai", _build_openai)
 register_provider("brute_force", _build_brute_force)
+register_provider("kaggle_proxy", _build_kaggle_proxy)
+
 

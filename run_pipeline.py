@@ -83,6 +83,14 @@ def parse_args() -> argparse.Namespace:
         help="Use fixed budget from harness config instead of level-specific adaptive budget",
     )
     parser.add_argument(
+        "--ablation-no-tools", action="store_true",
+        help="Ablation: Disable code execution tools (run_python, read_image) to evaluate direct one-shot reasoning",
+    )
+    parser.add_argument(
+        "--ablation-oracle-ops", action="store_true",
+        help="Ablation: Reveal ground-truth operator names in system prompt to isolate code synthesis from discovery",
+    )
+    parser.add_argument(
         "--workers", "--max-workers", type=int, default=None, dest="workers",
         help="Number of concurrent worker threads for parallel task execution (default: from harness config benchmark.max_workers)",
     )
@@ -91,6 +99,7 @@ def parse_args() -> argparse.Namespace:
         help="Validate input and generate tasks without creating an API client",
     )
     return parser.parse_args()
+
 
 
 
@@ -202,6 +211,7 @@ def main() -> int:
         "model": model_config.model_dump(exclude={"api_key_env"}),
         "api_key_env": model_config.api_key_env,
         "harness": harness_config.model_dump(),
+        "ablation_mode": "oracle_ops" if args.ablation_oracle_ops else ("no_tools" if args.ablation_no_tools else "standard"),
         "tasks": generated,
         "status": "prepared" if args.prepare_only else "running",
     }
@@ -255,7 +265,10 @@ def main() -> int:
             task_model,
             task_budget,
             provider_model=f"{model_config.provider}/{model_config.model}",
+            ablation_no_tools=args.ablation_no_tools,
+            ablation_oracle_ops=args.ablation_oracle_ops,
         )
+
         with print_lock:
             trans_acc = (
                 result.evaluation.transformed_column_accuracy
@@ -289,6 +302,16 @@ def main() -> int:
     report = _build_report_data(manifest, summary, time.monotonic() - started)
     _write_json(report_json_path, report)
     report_path.write_text(_render_markdown_report(report, summary), encoding="utf-8")
+    
+    # Export publication-ready LaTeX tables
+    latex_tables_dir = paths["reports"] / "tables"
+    try:
+        from src.benchmark.paper_tables import export_paper_tables
+        export_paper_tables(summary_path, latex_tables_dir)
+        print(f"LaTeX Tables: {latex_tables_dir}")
+    except Exception as exc:
+        print(f"LaTeX Table export warning: {exc}")
+
     manifest["status"] = "complete"
     manifest["completed_at"] = datetime.now(timezone.utc).isoformat()
     manifest["successful_submissions"] = sum(r.submission is not None for r in results)
@@ -299,6 +322,7 @@ def main() -> int:
     print(f"Report: {report_path}")
     print(f"Machine-readable report: {report_json_path}")
     print(f"Raw results: {paths['results']}")
+
     return 0
 
 
@@ -473,11 +497,20 @@ def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
         for t in task.get("transformations", []):
             for op in t.get("operators", []):
                 operator_counts[op] = operator_counts.get(op, 0) + 1
+    class_names = {
+        0: "Class 0: Atomic Unary",
+        1: "Class 1: Multi-column Independent Unary",
+        2: "Class 2: Composed Unary Chains (f(g(x)))",
+        3: "Class 3: Inter-column Arithmetic Interactions",
+        4: "Class 4: Piecewise & Conditional Logic",
+        5: "Class 5: Deep Hybrid ASTs (Composed + Interactive + Conditional)",
+    }
     lines = [
         "# Prepared Benchmark Dataset", "",
         f"- Source: `{manifest['source']}`",
         f"- Multi-dataset suite: {manifest.get('is_multi_dataset', False)}",
         f"- Level(s): {manifest.get('levels', [manifest.get('level', 1)])}",
+        f"- Ablation mode: `{manifest.get('ablation_mode', 'standard')}`",
         f"- Seed: {manifest.get('seed', 42)}",
         f"- Rows: {manifest['source_rows']}",
         f"- Columns: {len(manifest['source_columns'])}",
@@ -494,10 +527,11 @@ def _write_preparation_report(path: Path, manifest: dict[str, Any]) -> None:
         ])
     if level_counts:
         lines.extend([
-            "## Level distribution", "",
-            *[f"- Level {lvl}: {count} task(s)" for lvl, count in sorted(level_counts.items())],
+            "## Structural Complexity Class distribution", "",
+            *[f"- Level {lvl} ({class_names.get(lvl, 'Custom')}): {count} task(s)" for lvl, count in sorted(level_counts.items())],
             "",
         ])
+
     lines.extend([
         "## Operator distribution", "",
         *[f"- {name}: {count}" for name, count in sorted(operator_counts.items())],

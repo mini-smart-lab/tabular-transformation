@@ -6,15 +6,22 @@
 ---
 
 ## 1. Context & Reviewer Feedback Tracking
-- **Reviewer Feedback:** Manuscript scale was evaluated as *too small* (previously evaluated only on a single synthetic 10-column dataset with ~24 tasks).
+- **Reviewer Feedback:** Manuscript scale was evaluated as *too small* (previously evaluated only on a single synthetic 10-column dataset with ~24 tasks), plus methodological issues raised in `review_ms_loan.docx`:
+  1. Stateful operator parameter leakage (Point 6): StandardScaler/MinMaxScaler must fit on train only.
+  2. Ablation studies (Points 14, 16): Disentangle code tool vs discovery reasoning, and discovery vs code synthesis.
+  3. Complexity terminology (Points 5, 8): Non-monotonic Structural Complexity Classes and Complexity-Aware Budgets.
 - **Core Action Items:**
-  1. [x] **Archive Legacy Runs:** Safely backup all previous 2026-09 single-dataset runs in `archive/legacy_runs_202609/`.
+  1. [x] **Archive Legacy Runs:** Safely backed up previous 2026-09 single-dataset runs in `archive/legacy_runs_202609/`.
   2. [x] **Install Kaggle Benchmarks Skill:** Integrated `write-kaggle-benchmarks` (`.agent/skills/write-kaggle-benchmarks/`) and installed SDK (`kaggle-benchmarks` 0.6.1) to leverage Kaggle Model Proxy (0 API cost for frontier LLMs).
   3. [x] **Phase 1: Multi-Domain Source Datasets:** Curated 8 real-world datasets across diverse domains + 1 baseline dataset in `data/source_datasets/`.
   4. [x] **Phase 2: Task Engine & Pipeline Upgrade:** Extended `src/benchmark/task_builder.py` and `run_pipeline.py` with `build_multidataset_suite`, multi-dataset CLI flags (`--source-dir`, `--levels`, `--datasets`), and per-task level-specific adaptive budgets.
   5. [x] **Phase 3: Kaggle Benchmarks Bridge:** Implemented `src/kaggle_adapter/exporter.py` (`export_task_to_kbench`, `export_suite_to_kbench`) converting internal tasks to `@kbench.task` standard format with `# %%` cell markers, ground-truth assertion scoring, and standalone `.py` task files. Verified via end-to-end pilot run on multi-dataset suite.
-  6. [ ] **Phase 4: Academic Aggregation & LaTeX Tables:** Multi-dimensional metrics (Domain x Level x Model) with automated paper-ready table generation.
-  7. [ ] **Phase 5: Pilot Run & Full Evaluation:** Pilot run across all domains and levels.
+  6. [x] **Stateful Parameter Fitting (Point 6):** Implemented `fit` and `transform` in `Transformation` base and subclasses (`StandardScaler`, `MinMaxScaler`, `IndicatorMean`, `ConditionalInteraction`). All statistics are fitted strictly on `train_before` and applied with frozen parameters to `test_before`. Parameters are serialized to `config.yaml` for complete mathematical auditability.
+  7. [x] **Ablation Study Architecture (Points 14, 16):**
+     - `--ablation-no-tools`: Direct generation mode (disables `run_python` and `read_image`, forcing one-shot `submit_solution` to isolate tool utility).
+     - `--ablation-oracle-ops`: Oracle operators mode (reveals ground-truth operator names in the system prompt to isolate code synthesis from discovery).
+  8. [x] **Phase 4: Academic Aggregation & LaTeX Tables:** Implemented `src/benchmark/paper_tables.py` exporting three publication-ready LaTeX tables (`table_complexity_breakdown.tex`, `table_domain_breakdown.tex`, `table_ablation_study.tex`) automatically connected into pipeline execution.
+  9. [ ] **Phase 5: Pilot Run & Full Evaluation:** Run full benchmark suite across all domains and complexity classes.
 
 ---
 
@@ -78,12 +85,14 @@ All cleaned, standardized numeric CSV files and detailed column metadata reside 
 
 ---
 
-## 3. Important Implementation Notes
-- **Testing Guardrail:** Run `.venv\Scripts\python.exe -m pytest -q` before and after every modification. Ensure 100% offline pass.
+## 3. Important Implementation Notes & Commands
+- **Testing Guardrail:** Run `.venv\Scripts\python.exe -m pytest -q` before and after every modification. All 53 tests passing.
 - **Data Isolation:** Hidden test sets (`hidden/test_*.csv`) must never be leaked or mounted to Tier 1 discovery sandboxes.
-- **Ablation Study Reminder (from prior notes):**
-  - Run ablation on agent components (without code interpreter vs with code interpreter).
-  - Verify multimodal / plot reading tool effect if chart generation is added.
-- **Kaggle CLI Benchmarks:**
-  - Authenticate proxy credentials via `kaggle b auth -y`.
-  - Skill docs located in `.agent/skills/write-kaggle-benchmarks/SKILL.md`.
+- **Ablation Commands:**
+  - Standard discovery: `.venv\Scripts\python.exe run_pipeline.py --source-dir data/source_datasets --task-count 24`
+  - Direct generation (no tools): `.venv\Scripts\python.exe run_pipeline.py --source-dir data/source_datasets --task-count 24 --ablation-no-tools`
+  - Oracle operators (synthesis only): `.venv\Scripts\python.exe run_pipeline.py --source-dir data/source_datasets --task-count 24 --ablation-oracle-ops`
+- **Exporting Paper LaTeX Tables:**
+  - Automatically produced in `<run_dir>/reports/tables/` or manually via:
+    `.venv\Scripts\python.exe -m src.benchmark.paper_tables --summary <path_to_summary.csv> --output-dir reports/tables`
+
