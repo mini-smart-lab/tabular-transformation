@@ -1,0 +1,53 @@
+level: 5
+transformations:
+- column: lwrite
+  operators:
+  - IndicatorMeanTransformation
+  - SquareRootTransformation
+  parameters:
+  - threshold: 12.87966515521451
+  - {}
+- column: freemem
+  operators:
+  - MinMaxScalerTransformation
+  - Log1pTransformation
+  parameters:
+  - min: 62.0
+    ptp: 11965.0
+  - {}
+- column: freeswap
+  operators:
+  - CubeRootTransformation
+  - IndicatorMeanTransformation
+  parameters:
+  - {}
+  - threshold: 106.62903799808866
+- column: rchar
+  operators:
+  - PiecewiseLogTransformation
+  parameters:
+  - {}
+- column: scall
+  operators:
+  - MultiplyInteractionTransformation
+  - CosTransformation
+  source_columns:
+  - sread
+  - wchar
+  interaction: multiply
+  parameters:
+  - {}
+  - {}
+- column: lread
+  operators:
+  - ConditionalInteractionTransformation
+  - LogTransformation
+  source_columns:
+  - fork
+  - runqsz
+  interaction: conditional
+  parameters:
+  - threshold_a: 1.8975392396232995
+  - {}
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

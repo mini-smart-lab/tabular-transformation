@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: worst_radius
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+source_dataset: breast_cancer
+domain: Oncology / Pathology

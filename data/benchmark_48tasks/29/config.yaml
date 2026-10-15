@@ -1,0 +1,51 @@
+level: 5
+transformations:
+- column: superplasticizer
+  operators:
+  - PiecewiseLogTransformation
+  - CubeTransformation
+  parameters:
+  - {}
+  - {}
+- column: water
+  operators:
+  - SinTransformation
+  parameters:
+  - {}
+- column: age
+  operators:
+  - StandardScalerTransformation
+  - ExpTransformation
+  parameters:
+  - mean: 45.438280166435504
+    std: 63.213895129178546
+  - {}
+- column: fine_aggregate
+  operators:
+  - InverseTransformation
+  - SigmoidTransformation
+  parameters:
+  - {}
+  - {}
+- column: strength
+  operators:
+  - ConditionalInteractionTransformation
+  - IndicatorMeanTransformation
+  source_columns:
+  - fly_ash
+  - cement
+  interaction: conditional
+  parameters:
+  - threshold_a: 52.9891123439667
+  - threshold: 229.648294036061
+- column: blast_furnace_slag
+  operators:
+  - DivideInteractionTransformation
+  source_columns:
+  - cement
+  - coarse_aggregate
+  interaction: divide
+  parameters:
+  - {}
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science

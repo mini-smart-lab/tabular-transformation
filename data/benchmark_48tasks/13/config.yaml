@@ -1,0 +1,14 @@
+level: 1
+transformations:
+- column: fractal_dimension_error
+  operators:
+  - SquareRootTransformation
+  parameters:
+  - {}
+- column: worst_texture
+  operators:
+  - Log1pTransformation
+  parameters:
+  - {}
+source_dataset: breast_cancer
+domain: Oncology / Pathology

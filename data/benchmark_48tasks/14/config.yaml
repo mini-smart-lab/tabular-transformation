@@ -1,0 +1,25 @@
+level: 2
+transformations:
+- column: worst_compactness
+  operators:
+  - IndicatorMeanTransformation
+  - CubeTransformation
+  parameters:
+  - threshold: 0.25254052763819096
+  - {}
+- column: mean_smoothness
+  operators:
+  - InverseTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: mean_concavity
+  operators:
+  - CubeRootTransformation
+  - CosTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: breast_cancer
+domain: Oncology / Pathology

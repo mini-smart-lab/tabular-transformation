@@ -1,0 +1,15 @@
+level: 1
+transformations:
+- column: pressure
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+- column: thickness
+  operators:
+  - StandardScalerTransformation
+  parameters:
+  - mean: 0.011131063398288971
+    std: 0.013041024698176463
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

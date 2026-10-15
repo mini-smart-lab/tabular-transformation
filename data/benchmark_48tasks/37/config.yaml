@@ -1,0 +1,14 @@
+level: 1
+transformations:
+- column: s6
+  operators:
+  - AbsTransformation
+  parameters:
+  - {}
+- column: s1
+  operators:
+  - IndicatorMeanTransformation
+  parameters:
+  - threshold: 0.002149229942241624
+source_dataset: diabetes
+domain: Biomedical / Clinical Medicine

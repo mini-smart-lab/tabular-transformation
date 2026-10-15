@@ -1,0 +1,32 @@
+level: 4
+transformations:
+- column: magnesium
+  operators:
+  - IndicatorMeanTransformation
+  parameters:
+  - threshold: 99.41935483870968
+- column: od280_od315_of_diluted_wines
+  operators:
+  - SquareTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: nonflavanoid_phenols
+  operators:
+  - ExpTransformation
+  - CubeTransformation
+  parameters:
+  - {}
+  - {}
+- column: malic_acid
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - total_phenols
+  - alcohol
+  interaction: conditional
+  parameters:
+  - threshold_a: 2.303629032258064
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

@@ -96,16 +96,21 @@ def _build_kaggle_proxy(config: ModelConfig, api_key: str) -> Any:
             lc_openai_base._safe_message_patch_applied = True
     except ImportError as exc:
         raise RuntimeError("provider 'kaggle_proxy' requires langchain-openai package") from exc
-    base_url = os.getenv("MODEL_PROXY_URL_OPENAPI", "https://mp-staging.kaggle.net/models/openapi")
+    default_base = os.getenv("MODEL_PROXY_URL_OPENAPI")
+    if not default_base:
+        proxy_base = os.getenv("MODEL_PROXY_URL", "https://mp-staging.kaggle.net/models")
+        default_base = f"{proxy_base.rstrip('/')}/openapi"
+    base_url = default_base
     effective_key = api_key or os.getenv("MODEL_PROXY_API_KEY", "")
     kwargs: dict[str, Any] = dict(
         model=config.model,
-        temperature=config.temperature,
         api_key=effective_key,
         base_url=base_url,
         max_tokens=config.max_output_tokens,
         max_retries=10,
     )
+    if config.temperature is not None and "claude" not in config.model.lower():
+        kwargs["temperature"] = config.temperature
     return ChatOpenAI(**kwargs)
 
 

@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: age
+  operators:
+  - TanhTransformation
+  parameters:
+  - {}
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science

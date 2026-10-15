@@ -1,0 +1,14 @@
+level: 1
+transformations:
+- column: alcohol
+  operators:
+  - Log1pTransformation
+  parameters:
+  - {}
+- column: flavanoids
+  operators:
+  - SquareTransformation
+  parameters:
+  - {}
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

@@ -1,0 +1,25 @@
+level: 2
+transformations:
+- column: medinc
+  operators:
+  - IndicatorMeanTransformation
+  - CubeRootTransformation
+  parameters:
+  - threshold: 3.842457957142857
+  - {}
+- column: aveoccup
+  operators:
+  - AbsTransformation
+  - SinTransformation
+  parameters:
+  - {}
+  - {}
+- column: population
+  operators:
+  - InverseTransformation
+  - AbsTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: california_housing
+domain: Real Estate / Economics

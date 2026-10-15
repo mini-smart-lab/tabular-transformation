@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: v4
+  operators:
+  - SquareTransformation
+  parameters:
+  - {}
+source_dataset: banknote_authentication
+domain: Signal Processing / Security

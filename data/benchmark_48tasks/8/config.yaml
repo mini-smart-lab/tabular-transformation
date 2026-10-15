@@ -1,0 +1,25 @@
+level: 2
+transformations:
+- column: v1
+  operators:
+  - SigmoidTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: v3
+  operators:
+  - IndicatorZeroTransformation
+  - IndicatorMeanTransformation
+  parameters:
+  - {}
+  - threshold: 0.565625
+- column: v2
+  operators:
+  - ClipZeroTransformation
+  - Log1pTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: banknote_authentication
+domain: Signal Processing / Security

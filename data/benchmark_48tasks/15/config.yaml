@@ -1,0 +1,30 @@
+level: 3
+transformations:
+- column: mean_area
+  operators:
+  - IndicatorMeanTransformation
+  - CubeRootTransformation
+  parameters:
+  - threshold: 652.4665829145728
+  - {}
+- column: worst_symmetry
+  operators:
+  - SquareTransformation
+  parameters:
+  - {}
+- column: mean_perimeter
+  operators:
+  - InverseTransformation
+  parameters:
+  - {}
+- column: worst_concave_points
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - worst_fractal_dimension
+  - compactness_error
+  interaction: conditional
+  parameters:
+  - threshold_a: 0.08341763819095478
+source_dataset: breast_cancer
+domain: Oncology / Pathology

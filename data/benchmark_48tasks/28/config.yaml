@@ -1,0 +1,28 @@
+level: 4
+transformations:
+- column: fly_ash
+  operators:
+  - IndicatorMeanTransformation
+  parameters:
+  - threshold: 53.328016643550626
+- column: cement
+  operators:
+  - Log1pTransformation
+  parameters:
+  - {}
+- column: age
+  operators:
+  - SquareTransformation
+  parameters:
+  - {}
+- column: strength
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - water
+  - superplasticizer
+  interaction: conditional
+  parameters:
+  - threshold_a: 181.70391123439668
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science

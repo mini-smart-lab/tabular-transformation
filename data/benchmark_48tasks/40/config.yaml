@@ -1,0 +1,34 @@
+level: 4
+transformations:
+- column: s6
+  operators:
+  - IndicatorMeanTransformation
+  - TanhTransformation
+  parameters:
+  - threshold: -0.0006755511980548517
+  - {}
+- column: bp
+  operators:
+  - CubeRootTransformation
+  - Log1pTransformation
+  parameters:
+  - {}
+  - {}
+- column: age
+  operators:
+  - CubeTransformation
+  - ClipZeroTransformation
+  parameters:
+  - {}
+  - {}
+- column: target
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - s4
+  - s3
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: diabetes
+domain: Biomedical / Clinical Medicine

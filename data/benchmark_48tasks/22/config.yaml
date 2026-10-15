@@ -1,0 +1,32 @@
+level: 4
+transformations:
+- column: averooms
+  operators:
+  - IndicatorMeanTransformation
+  parameters:
+  - threshold: 5.434326782133104
+- column: medhouseval
+  operators:
+  - ExpTransformation
+  - SquareTransformation
+  parameters:
+  - {}
+  - {}
+- column: latitude
+  operators:
+  - SquareTransformation
+  - AbsTransformation
+  parameters:
+  - {}
+  - {}
+- column: medinc
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - avebedrms
+  - houseage
+  interaction: conditional
+  parameters:
+  - threshold_a: 1.0978872729426716
+source_dataset: california_housing
+domain: Real Estate / Economics

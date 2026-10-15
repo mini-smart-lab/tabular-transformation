@@ -1,0 +1,33 @@
+level: 4
+transformations:
+- column: target
+  operators:
+  - IndicatorMeanTransformation
+  - CubeRootTransformation
+  parameters:
+  - threshold: 0.635678391959799
+  - {}
+- column: mean_compactness
+  operators:
+  - MinMaxScalerTransformation
+  - SinTransformation
+  parameters:
+  - min: 0.02344
+    ptp: 0.32195999999999997
+  - {}
+- column: worst_concavity
+  operators:
+  - Log1pTransformation
+  parameters:
+  - {}
+- column: mean_perimeter
+  operators:
+  - AddInteractionTransformation
+  source_columns:
+  - concave_points_error
+  - mean_area
+  interaction: add
+  parameters:
+  - {}
+source_dataset: breast_cancer
+domain: Oncology / Pathology

@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: lread
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

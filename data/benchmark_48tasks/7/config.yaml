@@ -1,0 +1,14 @@
+level: 1
+transformations:
+- column: v4
+  operators:
+  - TanhTransformation
+  parameters:
+  - {}
+- column: v3
+  operators:
+  - ClipZeroTransformation
+  parameters:
+  - {}
+source_dataset: banknote_authentication
+domain: Signal Processing / Security

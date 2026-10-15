@@ -1,0 +1,15 @@
+level: 1
+transformations:
+- column: exec
+  operators:
+  - MinMaxScalerTransformation
+  parameters:
+  - min: 0.0
+    ptp: 38.8
+- column: fork
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

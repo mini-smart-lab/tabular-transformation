@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: color_intensity
+  operators:
+  - ExpTransformation
+  parameters:
+  - {}
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

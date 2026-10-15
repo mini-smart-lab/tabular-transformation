@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: medinc
+  operators:
+  - PiecewiseLogTransformation
+  parameters:
+  - {}
+source_dataset: california_housing
+domain: Real Estate / Economics

@@ -1,0 +1,48 @@
+level: 5
+transformations:
+- column: medinc
+  operators:
+  - PiecewiseLogTransformation
+  parameters:
+  - {}
+- column: medhouseval
+  operators:
+  - SquareRootTransformation
+  parameters:
+  - {}
+- column: aveoccup
+  operators:
+  - CubeRootTransformation
+  parameters:
+  - {}
+- column: avebedrms
+  operators:
+  - SquareTransformation
+  - SigmoidTransformation
+  parameters:
+  - {}
+  - {}
+- column: houseage
+  operators:
+  - MultiplyInteractionTransformation
+  - PiecewiseLogTransformation
+  source_columns:
+  - population
+  - averooms
+  interaction: multiply
+  parameters:
+  - {}
+  - {}
+- column: longitude
+  operators:
+  - AddInteractionTransformation
+  - SinTransformation
+  source_columns:
+  - latitude
+  - averooms
+  interaction: add
+  parameters:
+  - {}
+  - {}
+source_dataset: california_housing
+domain: Real Estate / Economics

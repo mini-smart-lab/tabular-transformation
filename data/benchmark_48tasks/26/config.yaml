@@ -1,0 +1,25 @@
+level: 2
+transformations:
+- column: cement
+  operators:
+  - SigmoidTransformation
+  - SinTransformation
+  parameters:
+  - {}
+  - {}
+- column: fly_ash
+  operators:
+  - IndicatorZeroTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: coarse_aggregate
+  operators:
+  - CubeTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science

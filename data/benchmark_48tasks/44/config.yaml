@@ -1,0 +1,26 @@
+level: 2
+transformations:
+- column: nonflavanoid_phenols
+  operators:
+  - SquareTransformation
+  - MinMaxScalerTransformation
+  parameters:
+  - {}
+  - min: 0.016900000000000002
+    ptp: 0.4187
+- column: flavanoids
+  operators:
+  - InverseTransformation
+  - CosTransformation
+  parameters:
+  - {}
+  - {}
+- column: hue
+  operators:
+  - IndicatorMeanTransformation
+  - CosTransformation
+  parameters:
+  - threshold: 0.9465000000000001
+  - {}
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

@@ -1,0 +1,2349 @@
+{
+  "pipeline_run": "prep_48tasks",
+  "created_at": "2026-10-15T09:54:20.762390+00:00",
+  "source": "D:\\Research\\tabular-transformation\\data\\source_datasets",
+  "is_multi_dataset": true,
+  "source_rows": 97788,
+  "source_columns": [],
+  "task_count": 48,
+  "level": 0,
+  "levels": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "seed": 42,
+  "train_fraction": 0.7,
+  "rows_per_task": 10000,
+  "operators": [
+    "AbsTransformation",
+    "AddInteractionTransformation",
+    "ClipZeroTransformation",
+    "ConditionalInteractionTransformation",
+    "CosTransformation",
+    "CubeRootTransformation",
+    "CubeTransformation",
+    "DivideInteractionTransformation",
+    "ExpTransformation",
+    "IndicatorMeanTransformation",
+    "IndicatorZeroTransformation",
+    "InverseTransformation",
+    "Log1pTransformation",
+    "LogTransformation",
+    "MinMaxScalerTransformation",
+    "MultiplyInteractionTransformation",
+    "PiecewiseLogTransformation",
+    "SigmoidTransformation",
+    "SinTransformation",
+    "SquareRootTransformation",
+    "SquareTransformation",
+    "StandardScalerTransformation",
+    "SubtractInteractionTransformation",
+    "TanhTransformation"
+  ],
+  "model": {
+    "provider": "nvidia",
+    "model": "nvidia/nemotron-3-super-120b-a12b",
+    "temperature": 0.0,
+    "seed": 42,
+    "max_output_tokens": null
+  },
+  "api_key_env": "NVIDIA_API_KEY",
+  "harness": {
+    "budget": {
+      "max_total_tokens": 200000,
+      "max_tool_calls": 25,
+      "max_total_execution_seconds": 120.0,
+      "max_total_cpu_seconds": 120.0,
+      "max_wall_time_seconds": 300.0
+    },
+    "level_budgets": {
+      "0": {
+        "max_total_tokens": 60000,
+        "max_tool_calls": 8,
+        "max_total_execution_seconds": 30.0,
+        "max_total_cpu_seconds": 30.0,
+        "max_wall_time_seconds": 120.0
+      },
+      "1": {
+        "max_total_tokens": 80000,
+        "max_tool_calls": 10,
+        "max_total_execution_seconds": 30.0,
+        "max_total_cpu_seconds": 30.0,
+        "max_wall_time_seconds": 120.0
+      },
+      "2": {
+        "max_total_tokens": 120000,
+        "max_tool_calls": 14,
+        "max_total_execution_seconds": 60.0,
+        "max_total_cpu_seconds": 60.0,
+        "max_wall_time_seconds": 180.0
+      },
+      "3": {
+        "max_total_tokens": 160000,
+        "max_tool_calls": 18,
+        "max_total_execution_seconds": 90.0,
+        "max_total_cpu_seconds": 90.0,
+        "max_wall_time_seconds": 240.0
+      },
+      "4": {
+        "max_total_tokens": 220000,
+        "max_tool_calls": 24,
+        "max_total_execution_seconds": 120.0,
+        "max_total_cpu_seconds": 120.0,
+        "max_wall_time_seconds": 300.0
+      },
+      "5": {
+        "max_total_tokens": 300000,
+        "max_tool_calls": 30,
+        "max_total_execution_seconds": 150.0,
+        "max_total_cpu_seconds": 150.0,
+        "max_wall_time_seconds": 360.0
+      }
+    },
+    "sandbox": {
+      "backend": "local",
+      "execution_timeout_seconds": 15.0,
+      "max_output_chars": 8192,
+      "docker_image": "tabular-benchmark-sandbox:latest",
+      "docker_network": "none",
+      "docker_cpus": 1.0,
+      "docker_memory": "1g",
+      "docker_pids_limit": 64
+    },
+    "benchmark": {
+      "numeric_atol": 1e-06,
+      "numeric_rtol": 1e-05,
+      "max_workers": 4
+    },
+    "operator_vocabulary": [
+      "LogTransformation",
+      "Log1pTransformation",
+      "SquareRootTransformation",
+      "SquareTransformation",
+      "CubeTransformation",
+      "CubeRootTransformation",
+      "ExpTransformation",
+      "InverseTransformation",
+      "StandardScalerTransformation",
+      "MinMaxScalerTransformation",
+      "SinTransformation",
+      "CosTransformation",
+      "TanhTransformation",
+      "SigmoidTransformation",
+      "AbsTransformation",
+      "AddInteractionTransformation",
+      "SubtractInteractionTransformation",
+      "MultiplyInteractionTransformation",
+      "DivideInteractionTransformation",
+      "IndicatorZeroTransformation",
+      "IndicatorMeanTransformation",
+      "ClipZeroTransformation",
+      "PiecewiseLogTransformation",
+      "ConditionalInteractionTransformation"
+    ]
+  },
+  "ablation_mode": "standard",
+  "tasks": [
+    {
+      "task_id": "0",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 0,
+      "seed": 42,
+      "transformations": [
+        {
+          "column": "velocity",
+          "operators": [
+            "LogTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "1",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 1,
+      "seed": 43,
+      "transformations": [
+        {
+          "column": "pressure",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "thickness",
+          "operators": [
+            "StandardScalerTransformation"
+          ],
+          "parameters": [
+            {
+              "mean": 0.011131063398288971,
+              "std": 0.013041024698176463
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "2",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 2,
+      "seed": 44,
+      "transformations": [
+        {
+          "column": "length",
+          "operators": [
+            "Log1pTransformation",
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "angle",
+          "operators": [
+            "CubeTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "pressure",
+          "operators": [
+            "InverseTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "3",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 3,
+      "seed": 45,
+      "transformations": [
+        {
+          "column": "pressure",
+          "operators": [
+            "PiecewiseLogTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "frequency",
+          "operators": [
+            "TanhTransformation",
+            "ExpTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "angle",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "thickness",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "velocity",
+            "length"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "4",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 4,
+      "seed": 46,
+      "transformations": [
+        {
+          "column": "angle",
+          "operators": [
+            "PiecewiseLogTransformation",
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "thickness",
+          "operators": [
+            "CosTransformation",
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "length",
+          "operators": [
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "pressure",
+          "operators": [
+            "AddInteractionTransformation"
+          ],
+          "source_columns": [
+            "velocity",
+            "frequency"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "5",
+      "source_dataset": "airfoil_self_noise",
+      "domain": "Aeronautics / Fluid Acoustics",
+      "level": 5,
+      "seed": 47,
+      "transformations": [
+        {
+          "column": "thickness",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "Log1pTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.011280533607414447
+            },
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "angle",
+          "operators": [
+            "AddInteractionTransformation",
+            "TanhTransformation"
+          ],
+          "source_columns": [
+            "frequency",
+            "velocity"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "pressure",
+          "operators": [
+            "MultiplyInteractionTransformation"
+          ],
+          "source_columns": [
+            "length",
+            "velocity"
+          ],
+          "interaction": "multiply",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "6",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 0,
+      "seed": 48,
+      "transformations": [
+        {
+          "column": "v4",
+          "operators": [
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "7",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 1,
+      "seed": 49,
+      "transformations": [
+        {
+          "column": "v4",
+          "operators": [
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "v3",
+          "operators": [
+            "ClipZeroTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "8",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 2,
+      "seed": 50,
+      "transformations": [
+        {
+          "column": "v1",
+          "operators": [
+            "SigmoidTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "v3",
+          "operators": [
+            "IndicatorZeroTransformation",
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {},
+            {
+              "threshold": 0.565625
+            }
+          ]
+        },
+        {
+          "column": "v2",
+          "operators": [
+            "ClipZeroTransformation",
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "9",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 3,
+      "seed": 51,
+      "transformations": [
+        {
+          "column": "v4",
+          "operators": [
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "v1",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "v3",
+            "v2"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 1.530634034375
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "10",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 4,
+      "seed": 52,
+      "transformations": [
+        {
+          "column": "v4",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": -1.2357701343749998
+            },
+            {}
+          ]
+        },
+        {
+          "column": "v2",
+          "operators": [
+            "AddInteractionTransformation"
+          ],
+          "source_columns": [
+            "v1",
+            "v3"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "11",
+      "source_dataset": "banknote_authentication",
+      "domain": "Signal Processing / Security",
+      "level": 5,
+      "seed": 53,
+      "transformations": [
+        {
+          "column": "v1",
+          "operators": [
+            "IndicatorZeroTransformation",
+            "SquareTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {},
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "v3",
+          "operators": [
+            "MultiplyInteractionTransformation"
+          ],
+          "source_columns": [
+            "v4",
+            "v2"
+          ],
+          "interaction": "multiply",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "12",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 0,
+      "seed": 54,
+      "transformations": [
+        {
+          "column": "worst_radius",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "13",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 1,
+      "seed": 55,
+      "transformations": [
+        {
+          "column": "fractal_dimension_error",
+          "operators": [
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "worst_texture",
+          "operators": [
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "14",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 2,
+      "seed": 56,
+      "transformations": [
+        {
+          "column": "worst_compactness",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.25254052763819096
+            },
+            {}
+          ]
+        },
+        {
+          "column": "mean_smoothness",
+          "operators": [
+            "InverseTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "mean_concavity",
+          "operators": [
+            "CubeRootTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "15",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 3,
+      "seed": 57,
+      "transformations": [
+        {
+          "column": "mean_area",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 652.4665829145728
+            },
+            {}
+          ]
+        },
+        {
+          "column": "worst_symmetry",
+          "operators": [
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "mean_perimeter",
+          "operators": [
+            "InverseTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "worst_concave_points",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "worst_fractal_dimension",
+            "compactness_error"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 0.08341763819095478
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "16",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 4,
+      "seed": 58,
+      "transformations": [
+        {
+          "column": "target",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.635678391959799
+            },
+            {}
+          ]
+        },
+        {
+          "column": "mean_compactness",
+          "operators": [
+            "MinMaxScalerTransformation",
+            "SinTransformation"
+          ],
+          "parameters": [
+            {
+              "min": 0.02344,
+              "ptp": 0.32195999999999997
+            },
+            {}
+          ]
+        },
+        {
+          "column": "worst_concavity",
+          "operators": [
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "mean_perimeter",
+          "operators": [
+            "AddInteractionTransformation"
+          ],
+          "source_columns": [
+            "concave_points_error",
+            "mean_area"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "17",
+      "source_dataset": "breast_cancer",
+      "domain": "Oncology / Pathology",
+      "level": 5,
+      "seed": 59,
+      "transformations": [
+        {
+          "column": "mean_area",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 648.9067839195981
+            },
+            {}
+          ]
+        },
+        {
+          "column": "worst_compactness",
+          "operators": [
+            "CubeRootTransformation",
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "target",
+          "operators": [
+            "SinTransformation",
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "radius_error",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "mean_concavity",
+          "operators": [
+            "DivideInteractionTransformation",
+            "CubeRootTransformation"
+          ],
+          "source_columns": [
+            "mean_fractal_dimension",
+            "mean_compactness"
+          ],
+          "interaction": "divide",
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "worst_concave_points",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "fractal_dimension_error",
+            "worst_smoothness"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 0.0037139678391959795
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "18",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 0,
+      "seed": 60,
+      "transformations": [
+        {
+          "column": "medinc",
+          "operators": [
+            "PiecewiseLogTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "19",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 1,
+      "seed": 61,
+      "transformations": [
+        {
+          "column": "avebedrms",
+          "operators": [
+            "StandardScalerTransformation"
+          ],
+          "parameters": [
+            {
+              "mean": 1.0975329859706593,
+              "std": 0.5516023355732369
+            }
+          ]
+        },
+        {
+          "column": "medinc",
+          "operators": [
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "20",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 2,
+      "seed": 62,
+      "transformations": [
+        {
+          "column": "medinc",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 3.842457957142857
+            },
+            {}
+          ]
+        },
+        {
+          "column": "aveoccup",
+          "operators": [
+            "AbsTransformation",
+            "SinTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "population",
+          "operators": [
+            "InverseTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "21",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 3,
+      "seed": 63,
+      "transformations": [
+        {
+          "column": "aveoccup",
+          "operators": [
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "population",
+          "operators": [
+            "PiecewiseLogTransformation",
+            "MinMaxScalerTransformation"
+          ],
+          "parameters": [
+            {},
+            {
+              "min": 1.791759469228055,
+              "ptp": 7.907467618995366
+            }
+          ]
+        },
+        {
+          "column": "houseage",
+          "operators": [
+            "CosTransformation",
+            "StandardScalerTransformation"
+          ],
+          "parameters": [
+            {},
+            {
+              "mean": -0.02073768103175133,
+              "std": 0.6826935173950356
+            }
+          ]
+        },
+        {
+          "column": "medinc",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "latitude",
+            "averooms"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "22",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 4,
+      "seed": 64,
+      "transformations": [
+        {
+          "column": "averooms",
+          "operators": [
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 5.434326782133104
+            }
+          ]
+        },
+        {
+          "column": "medhouseval",
+          "operators": [
+            "ExpTransformation",
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "latitude",
+          "operators": [
+            "SquareTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "medinc",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "avebedrms",
+            "houseage"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 1.0978872729426716
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "23",
+      "source_dataset": "california_housing",
+      "domain": "Real Estate / Economics",
+      "level": 5,
+      "seed": 65,
+      "transformations": [
+        {
+          "column": "medinc",
+          "operators": [
+            "PiecewiseLogTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "medhouseval",
+          "operators": [
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "aveoccup",
+          "operators": [
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "avebedrms",
+          "operators": [
+            "SquareTransformation",
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "houseage",
+          "operators": [
+            "MultiplyInteractionTransformation",
+            "PiecewiseLogTransformation"
+          ],
+          "source_columns": [
+            "population",
+            "averooms"
+          ],
+          "interaction": "multiply",
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "longitude",
+          "operators": [
+            "AddInteractionTransformation",
+            "SinTransformation"
+          ],
+          "source_columns": [
+            "latitude",
+            "averooms"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "24",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 0,
+      "seed": 66,
+      "transformations": [
+        {
+          "column": "age",
+          "operators": [
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "25",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 1,
+      "seed": 67,
+      "transformations": [
+        {
+          "column": "cement",
+          "operators": [
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "fly_ash",
+          "operators": [
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "26",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 2,
+      "seed": 68,
+      "transformations": [
+        {
+          "column": "cement",
+          "operators": [
+            "SigmoidTransformation",
+            "SinTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "fly_ash",
+          "operators": [
+            "IndicatorZeroTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "coarse_aggregate",
+          "operators": [
+            "CubeTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "27",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 3,
+      "seed": 69,
+      "transformations": [
+        {
+          "column": "superplasticizer",
+          "operators": [
+            "StandardScalerTransformation"
+          ],
+          "parameters": [
+            {
+              "mean": 6.191925104022191,
+              "std": 6.083577429989618
+            }
+          ]
+        },
+        {
+          "column": "water",
+          "operators": [
+            "StandardScalerTransformation"
+          ],
+          "parameters": [
+            {
+              "mean": 181.82531206657418,
+              "std": 21.08455764507445
+            }
+          ]
+        },
+        {
+          "column": "coarse_aggregate",
+          "operators": [
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "fly_ash",
+          "operators": [
+            "DivideInteractionTransformation"
+          ],
+          "source_columns": [
+            "blast_furnace_slag",
+            "age"
+          ],
+          "interaction": "divide",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "28",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 4,
+      "seed": 70,
+      "transformations": [
+        {
+          "column": "fly_ash",
+          "operators": [
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 53.328016643550626
+            }
+          ]
+        },
+        {
+          "column": "cement",
+          "operators": [
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "age",
+          "operators": [
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "strength",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "water",
+            "superplasticizer"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 181.70391123439668
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "29",
+      "source_dataset": "concrete_strength",
+      "domain": "Civil Engineering / Materials Science",
+      "level": 5,
+      "seed": 71,
+      "transformations": [
+        {
+          "column": "superplasticizer",
+          "operators": [
+            "PiecewiseLogTransformation",
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "water",
+          "operators": [
+            "SinTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "age",
+          "operators": [
+            "StandardScalerTransformation",
+            "ExpTransformation"
+          ],
+          "parameters": [
+            {
+              "mean": 45.438280166435504,
+              "std": 63.213895129178546
+            },
+            {}
+          ]
+        },
+        {
+          "column": "fine_aggregate",
+          "operators": [
+            "InverseTransformation",
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "strength",
+          "operators": [
+            "ConditionalInteractionTransformation",
+            "IndicatorMeanTransformation"
+          ],
+          "source_columns": [
+            "fly_ash",
+            "cement"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 52.9891123439667
+            },
+            {
+              "threshold": 229.648294036061
+            }
+          ]
+        },
+        {
+          "column": "blast_furnace_slag",
+          "operators": [
+            "DivideInteractionTransformation"
+          ],
+          "source_columns": [
+            "cement",
+            "coarse_aggregate"
+          ],
+          "interaction": "divide",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "30",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 0,
+      "seed": 72,
+      "transformations": [
+        {
+          "column": "lread",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "31",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 1,
+      "seed": 73,
+      "transformations": [
+        {
+          "column": "exec",
+          "operators": [
+            "MinMaxScalerTransformation"
+          ],
+          "parameters": [
+            {
+              "min": 0.0,
+              "ptp": 38.8
+            }
+          ]
+        },
+        {
+          "column": "fork",
+          "operators": [
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "32",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 2,
+      "seed": 74,
+      "transformations": [
+        {
+          "column": "sread",
+          "operators": [
+            "MinMaxScalerTransformation",
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "min": 6.0,
+              "ptp": 2497.0
+            },
+            {
+              "threshold": 0.08133478346321131
+            }
+          ]
+        },
+        {
+          "column": "rchar",
+          "operators": [
+            "InverseTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "usr",
+          "operators": [
+            "SquareRootTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "33",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 3,
+      "seed": 75,
+      "transformations": [
+        {
+          "column": "sread",
+          "operators": [
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "lwrite",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 12.903732124171608
+            },
+            {}
+          ]
+        },
+        {
+          "column": "swrite",
+          "operators": [
+            "SinTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "wchar",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "runqsz",
+            "lread"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 21.65631321939309
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "34",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 4,
+      "seed": 76,
+      "transformations": [
+        {
+          "column": "freeswap",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 1327714.7309033833
+            },
+            {}
+          ]
+        },
+        {
+          "column": "freemem",
+          "operators": [
+            "PiecewiseLogTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "usr",
+          "operators": [
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "wchar",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "exec",
+            "lread"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "35",
+      "source_dataset": "cpu_small",
+      "domain": "Computer Systems / Telemetry",
+      "level": 5,
+      "seed": 77,
+      "transformations": [
+        {
+          "column": "lwrite",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 12.87966515521451
+            },
+            {}
+          ]
+        },
+        {
+          "column": "freemem",
+          "operators": [
+            "MinMaxScalerTransformation",
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {
+              "min": 62.0,
+              "ptp": 11965.0
+            },
+            {}
+          ]
+        },
+        {
+          "column": "freeswap",
+          "operators": [
+            "CubeRootTransformation",
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {},
+            {
+              "threshold": 106.62903799808866
+            }
+          ]
+        },
+        {
+          "column": "rchar",
+          "operators": [
+            "PiecewiseLogTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "scall",
+          "operators": [
+            "MultiplyInteractionTransformation",
+            "CosTransformation"
+          ],
+          "source_columns": [
+            "sread",
+            "wchar"
+          ],
+          "interaction": "multiply",
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "lread",
+          "operators": [
+            "ConditionalInteractionTransformation",
+            "LogTransformation"
+          ],
+          "source_columns": [
+            "fork",
+            "runqsz"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 1.8975392396232995
+            },
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "36",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 0,
+      "seed": 78,
+      "transformations": [
+        {
+          "column": "s4",
+          "operators": [
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": -0.00020622835708071122
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "37",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 1,
+      "seed": 79,
+      "transformations": [
+        {
+          "column": "s6",
+          "operators": [
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "s1",
+          "operators": [
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.002149229942241624
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "38",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 2,
+      "seed": 80,
+      "transformations": [
+        {
+          "column": "s2",
+          "operators": [
+            "SinTransformation",
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "age",
+          "operators": [
+            "ClipZeroTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "sex",
+          "operators": [
+            "AbsTransformation",
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "39",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 3,
+      "seed": 81,
+      "transformations": [
+        {
+          "column": "bmi",
+          "operators": [
+            "MinMaxScalerTransformation",
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "min": -0.0902752958985094,
+              "ptp": 0.2511302132142262
+            },
+            {
+              "threshold": 0.346542217036821
+            }
+          ]
+        },
+        {
+          "column": "target",
+          "operators": [
+            "LogTransformation",
+            "ExpTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "s6",
+          "operators": [
+            "CosTransformation",
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "s1",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "bp",
+            "s2"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "40",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 4,
+      "seed": 82,
+      "transformations": [
+        {
+          "column": "s6",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": -0.0006755511980548517
+            },
+            {}
+          ]
+        },
+        {
+          "column": "bp",
+          "operators": [
+            "CubeRootTransformation",
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "age",
+          "operators": [
+            "CubeTransformation",
+            "ClipZeroTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "target",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "s4",
+            "s3"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "41",
+      "source_dataset": "diabetes",
+      "domain": "Biomedical / Clinical Medicine",
+      "level": 5,
+      "seed": 83,
+      "transformations": [
+        {
+          "column": "s3",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "AbsTransformation",
+            "IndicatorZeroTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.0018987884293296294
+            },
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "s6",
+          "operators": [
+            "Log1pTransformation",
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "s1",
+          "operators": [
+            "TanhTransformation",
+            "SigmoidTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "s5",
+          "operators": [
+            "IndicatorZeroTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "s2",
+          "operators": [
+            "AddInteractionTransformation",
+            "StandardScalerTransformation"
+          ],
+          "source_columns": [
+            "bmi",
+            "bp"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {},
+            {
+              "mean": 0.00031300190055783244,
+              "std": 0.07797500621923338
+            }
+          ]
+        },
+        {
+          "column": "age",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "sex",
+            "target"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": -0.00021984765410784448
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "42",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 0,
+      "seed": 84,
+      "transformations": [
+        {
+          "column": "color_intensity",
+          "operators": [
+            "ExpTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "43",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 1,
+      "seed": 85,
+      "transformations": [
+        {
+          "column": "alcohol",
+          "operators": [
+            "Log1pTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "flavanoids",
+          "operators": [
+            "SquareTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "44",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 2,
+      "seed": 86,
+      "transformations": [
+        {
+          "column": "nonflavanoid_phenols",
+          "operators": [
+            "SquareTransformation",
+            "MinMaxScalerTransformation"
+          ],
+          "parameters": [
+            {},
+            {
+              "min": 0.016900000000000002,
+              "ptp": 0.4187
+            }
+          ]
+        },
+        {
+          "column": "flavanoids",
+          "operators": [
+            "InverseTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "hue",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CosTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 0.9465000000000001
+            },
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "45",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 3,
+      "seed": 87,
+      "transformations": [
+        {
+          "column": "flavanoids",
+          "operators": [
+            "LogTransformation",
+            "ClipZeroTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "proline",
+          "operators": [
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "color_intensity",
+          "operators": [
+            "CubeRootTransformation"
+          ],
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "alcohol",
+          "operators": [
+            "SubtractInteractionTransformation"
+          ],
+          "source_columns": [
+            "total_phenols",
+            "magnesium"
+          ],
+          "interaction": "subtract",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "46",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 4,
+      "seed": 88,
+      "transformations": [
+        {
+          "column": "magnesium",
+          "operators": [
+            "IndicatorMeanTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 99.41935483870968
+            }
+          ]
+        },
+        {
+          "column": "od280_od315_of_diluted_wines",
+          "operators": [
+            "SquareTransformation",
+            "SquareRootTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "nonflavanoid_phenols",
+          "operators": [
+            "ExpTransformation",
+            "CubeTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "malic_acid",
+          "operators": [
+            "ConditionalInteractionTransformation"
+          ],
+          "source_columns": [
+            "total_phenols",
+            "alcohol"
+          ],
+          "interaction": "conditional",
+          "parameters": [
+            {
+              "threshold_a": 2.303629032258064
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "47",
+      "source_dataset": "wine_quality",
+      "domain": "Food Chemistry / Agriculture",
+      "level": 5,
+      "seed": 89,
+      "transformations": [
+        {
+          "column": "alcohol",
+          "operators": [
+            "IndicatorMeanTransformation",
+            "CubeRootTransformation",
+            "AbsTransformation"
+          ],
+          "parameters": [
+            {
+              "threshold": 12.947903225806451
+            },
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "hue",
+          "operators": [
+            "Log1pTransformation",
+            "LogTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "proanthocyanins",
+          "operators": [
+            "CosTransformation",
+            "SinTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "flavanoids",
+          "operators": [
+            "CubeRootTransformation",
+            "TanhTransformation"
+          ],
+          "parameters": [
+            {},
+            {}
+          ]
+        },
+        {
+          "column": "od280_od315_of_diluted_wines",
+          "operators": [
+            "MultiplyInteractionTransformation"
+          ],
+          "source_columns": [
+            "target",
+            "ash"
+          ],
+          "interaction": "multiply",
+          "parameters": [
+            {}
+          ]
+        },
+        {
+          "column": "alcalinity_of_ash",
+          "operators": [
+            "AddInteractionTransformation"
+          ],
+          "source_columns": [
+            "total_phenols",
+            "nonflavanoid_phenols"
+          ],
+          "interaction": "add",
+          "parameters": [
+            {}
+          ]
+        }
+      ]
+    }
+  ],
+  "status": "prepared"
+}

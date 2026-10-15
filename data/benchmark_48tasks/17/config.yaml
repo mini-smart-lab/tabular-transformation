@@ -1,0 +1,50 @@
+level: 5
+transformations:
+- column: mean_area
+  operators:
+  - IndicatorMeanTransformation
+  - CosTransformation
+  parameters:
+  - threshold: 648.9067839195981
+  - {}
+- column: worst_compactness
+  operators:
+  - CubeRootTransformation
+  - CubeTransformation
+  parameters:
+  - {}
+  - {}
+- column: target
+  operators:
+  - SinTransformation
+  - TanhTransformation
+  parameters:
+  - {}
+  - {}
+- column: radius_error
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+- column: mean_concavity
+  operators:
+  - DivideInteractionTransformation
+  - CubeRootTransformation
+  source_columns:
+  - mean_fractal_dimension
+  - mean_compactness
+  interaction: divide
+  parameters:
+  - {}
+  - {}
+- column: worst_concave_points
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - fractal_dimension_error
+  - worst_smoothness
+  interaction: conditional
+  parameters:
+  - threshold_a: 0.0037139678391959795
+source_dataset: breast_cancer
+domain: Oncology / Pathology

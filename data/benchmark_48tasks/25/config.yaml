@@ -1,0 +1,14 @@
+level: 1
+transformations:
+- column: cement
+  operators:
+  - TanhTransformation
+  parameters:
+  - {}
+- column: fly_ash
+  operators:
+  - SigmoidTransformation
+  parameters:
+  - {}
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science

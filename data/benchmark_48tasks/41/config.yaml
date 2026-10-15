@@ -1,0 +1,53 @@
+level: 5
+transformations:
+- column: s3
+  operators:
+  - IndicatorMeanTransformation
+  - AbsTransformation
+  - IndicatorZeroTransformation
+  parameters:
+  - threshold: 0.0018987884293296294
+  - {}
+  - {}
+- column: s6
+  operators:
+  - Log1pTransformation
+  - CubeRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: s1
+  operators:
+  - TanhTransformation
+  - SigmoidTransformation
+  parameters:
+  - {}
+  - {}
+- column: s5
+  operators:
+  - IndicatorZeroTransformation
+  parameters:
+  - {}
+- column: s2
+  operators:
+  - AddInteractionTransformation
+  - StandardScalerTransformation
+  source_columns:
+  - bmi
+  - bp
+  interaction: add
+  parameters:
+  - {}
+  - mean: 0.00031300190055783244
+    std: 0.07797500621923338
+- column: age
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - sex
+  - target
+  interaction: conditional
+  parameters:
+  - threshold_a: -0.00021984765410784448
+source_dataset: diabetes
+domain: Biomedical / Clinical Medicine

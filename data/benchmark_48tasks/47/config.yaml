@@ -1,0 +1,52 @@
+level: 5
+transformations:
+- column: alcohol
+  operators:
+  - IndicatorMeanTransformation
+  - CubeRootTransformation
+  - AbsTransformation
+  parameters:
+  - threshold: 12.947903225806451
+  - {}
+  - {}
+- column: hue
+  operators:
+  - Log1pTransformation
+  - LogTransformation
+  parameters:
+  - {}
+  - {}
+- column: proanthocyanins
+  operators:
+  - CosTransformation
+  - SinTransformation
+  parameters:
+  - {}
+  - {}
+- column: flavanoids
+  operators:
+  - CubeRootTransformation
+  - TanhTransformation
+  parameters:
+  - {}
+  - {}
+- column: od280_od315_of_diluted_wines
+  operators:
+  - MultiplyInteractionTransformation
+  source_columns:
+  - target
+  - ash
+  interaction: multiply
+  parameters:
+  - {}
+- column: alcalinity_of_ash
+  operators:
+  - AddInteractionTransformation
+  source_columns:
+  - total_phenols
+  - nonflavanoid_phenols
+  interaction: add
+  parameters:
+  - {}
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

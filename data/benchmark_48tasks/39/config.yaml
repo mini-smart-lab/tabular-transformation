@@ -1,0 +1,35 @@
+level: 3
+transformations:
+- column: bmi
+  operators:
+  - MinMaxScalerTransformation
+  - IndicatorMeanTransformation
+  parameters:
+  - min: -0.0902752958985094
+    ptp: 0.2511302132142262
+  - threshold: 0.346542217036821
+- column: target
+  operators:
+  - LogTransformation
+  - ExpTransformation
+  parameters:
+  - {}
+  - {}
+- column: s6
+  operators:
+  - CosTransformation
+  - SquareTransformation
+  parameters:
+  - {}
+  - {}
+- column: s1
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - bp
+  - s2
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: diabetes
+domain: Biomedical / Clinical Medicine

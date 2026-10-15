@@ -1,0 +1,20 @@
+level: 4
+transformations:
+- column: v4
+  operators:
+  - IndicatorMeanTransformation
+  - CubeRootTransformation
+  parameters:
+  - threshold: -1.2357701343749998
+  - {}
+- column: v2
+  operators:
+  - AddInteractionTransformation
+  source_columns:
+  - v1
+  - v3
+  interaction: add
+  parameters:
+  - {}
+source_dataset: banknote_authentication
+domain: Signal Processing / Security

@@ -1,0 +1,30 @@
+level: 3
+transformations:
+- column: sread
+  operators:
+  - CubeRootTransformation
+  parameters:
+  - {}
+- column: lwrite
+  operators:
+  - IndicatorMeanTransformation
+  - TanhTransformation
+  parameters:
+  - threshold: 12.903732124171608
+  - {}
+- column: swrite
+  operators:
+  - SinTransformation
+  parameters:
+  - {}
+- column: wchar
+  operators:
+  - ConditionalInteractionTransformation
+  source_columns:
+  - runqsz
+  - lread
+  interaction: conditional
+  parameters:
+  - threshold_a: 21.65631321939309
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

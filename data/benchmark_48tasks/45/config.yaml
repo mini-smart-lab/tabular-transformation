@@ -1,0 +1,30 @@
+level: 3
+transformations:
+- column: flavanoids
+  operators:
+  - LogTransformation
+  - ClipZeroTransformation
+  parameters:
+  - {}
+  - {}
+- column: proline
+  operators:
+  - TanhTransformation
+  parameters:
+  - {}
+- column: color_intensity
+  operators:
+  - CubeRootTransformation
+  parameters:
+  - {}
+- column: alcohol
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - total_phenols
+  - magnesium
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: wine_quality
+domain: Food Chemistry / Agriculture

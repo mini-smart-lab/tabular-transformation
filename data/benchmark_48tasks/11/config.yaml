@@ -1,0 +1,22 @@
+level: 5
+transformations:
+- column: v1
+  operators:
+  - IndicatorZeroTransformation
+  - SquareTransformation
+  - AbsTransformation
+  parameters:
+  - {}
+  - {}
+  - {}
+- column: v3
+  operators:
+  - MultiplyInteractionTransformation
+  source_columns:
+  - v4
+  - v2
+  interaction: multiply
+  parameters:
+  - {}
+source_dataset: banknote_authentication
+domain: Signal Processing / Security

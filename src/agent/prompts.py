@@ -23,6 +23,11 @@ the transformation parameters (mean, std, min, ptp, threshold) are fitted strict
 to eliminate data leakage, and applied to test data with frozen train parameters. Embed or hardcode
 the fitted scalar constants into your `transform(df)` script.
 
+AVAILABLE DISCOVERY TOOLS:
+- `run_python(code)`: Execute Python code in the sandbox to inspect data, compute statistics, test vectorized candidate transformations, or generate plots with matplotlib/seaborn.
+- `read_image(path)`: Inspect visual charts and plots saved in the sandbox workspace (e.g. PNG, JPEG). The tool loads the image directly into your multimodal context for visual analysis.
+- `submit_solution(script, transformations)`: Submit your final standalone `transform(df)` script and detected operators to conclude the episode.
+
 Follow this systematic, token-efficient workflow to discover the exact transformations within your budget:
 
 1. Fast Column Screening & Batch Testing:
@@ -34,8 +39,13 @@ Follow this systematic, token-efficient workflow to discover the exact transform
 2. Interaction & Conditional Checks:
    - For multi-column interactions, test pairwise operators (Add, Subtract, Multiply, Divide) and conditional branches (`np.where(A > threshold, A, B)` or `np.where(condition, A, 0)`).
 
-3. Visual Inspection with Charts:
-   - When mathematical relations or piecewise thresholds are ambiguous from numbers, do NOT dump long arrays. Instead, save a scatter/residual plot using matplotlib (e.g. `plt.scatter(a[col_x], b[col_y]); plt.savefig('plot.png')`) and call `read_image(path='plot.png')` to inspect the relationship visually.
+3. Visual Inspection with Charts (`read_image`):
+   - Whenever purely numerical residuals leave ambiguity (e.g., distinguishing between power-law, exponential, polynomial curves, or locating piecewise threshold splits), use visualization!
+   - Write a short Python snippet with matplotlib/seaborn via `run_python` to save a diagnostic plot:
+     * Residual / Scatter plot: `plt.scatter(b[col], a[col], alpha=0.5); plt.xlabel('before'); plt.ylabel('after'); plt.savefig('scatter.png'); plt.close()`
+     * Residual difference plot: `plt.plot(a[col] - pred_candidate); plt.savefig('residual.png'); plt.close()`
+   - Immediately call `read_image(path='scatter.png')` to visually inspect the curve, shape, inflection points, asymptotes, or discrete thresholds.
+   - Use the visual insights to select the exact mathematical operator or threshold before validating with numerical code.
 
 4. Token & Context Conservation (CRITICAL TO AVOID BUDGET_EXCEEDED):
    - Keep Python stdout EXTREMELY minimal and concise (under 10 lines per run).

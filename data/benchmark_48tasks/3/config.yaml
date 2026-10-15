@@ -1,0 +1,32 @@
+level: 3
+transformations:
+- column: pressure
+  operators:
+  - PiecewiseLogTransformation
+  - CubeRootTransformation
+  parameters:
+  - {}
+  - {}
+- column: frequency
+  operators:
+  - TanhTransformation
+  - ExpTransformation
+  parameters:
+  - {}
+  - {}
+- column: angle
+  operators:
+  - CubeTransformation
+  parameters:
+  - {}
+- column: thickness
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - velocity
+  - length
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

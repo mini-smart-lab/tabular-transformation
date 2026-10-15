@@ -1,0 +1,25 @@
+level: 2
+transformations:
+- column: length
+  operators:
+  - Log1pTransformation
+  - CubeTransformation
+  parameters:
+  - {}
+  - {}
+- column: angle
+  operators:
+  - CubeTransformation
+  - CosTransformation
+  parameters:
+  - {}
+  - {}
+- column: pressure
+  operators:
+  - InverseTransformation
+  - SquareRootTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

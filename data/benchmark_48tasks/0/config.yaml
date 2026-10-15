@@ -1,0 +1,9 @@
+level: 0
+transformations:
+- column: velocity
+  operators:
+  - LogTransformation
+  parameters:
+  - {}
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

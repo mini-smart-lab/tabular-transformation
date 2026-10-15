@@ -470,8 +470,10 @@ def build_multidataset_suite(
     num_levels = len(target_levels)
 
     for index in range(task_count):
-        ds_item = datasets[index % num_datasets]
-        lvl = target_levels[index % num_levels]
+        ds_idx = (index // num_levels) % num_datasets
+        lvl_idx = index % num_levels
+        ds_item = datasets[ds_idx]
+        lvl = target_levels[lvl_idx]
         task_dir = output_path / str(index)
 
         task_dir.mkdir(parents=True, exist_ok=True)

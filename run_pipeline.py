@@ -161,6 +161,7 @@ def main() -> int:
                         "level": t_obj.level,
                         "transformations": [tr.model_dump() for tr in t_obj.transformations],
                     })
+        args.task_count = len(generated)
         source_desc = f"reused:{args.tasks_dir}"
         source_rows = sum(len(pd.read_csv(paths["tasks"] / t["task_id"] / "train_before.csv")) for t in generated)
         source_columns = []

@@ -1,0 +1,34 @@
+level: 3
+transformations:
+- column: aveoccup
+  operators:
+  - CubeRootTransformation
+  parameters:
+  - {}
+- column: population
+  operators:
+  - PiecewiseLogTransformation
+  - MinMaxScalerTransformation
+  parameters:
+  - {}
+  - min: 1.791759469228055
+    ptp: 7.907467618995366
+- column: houseage
+  operators:
+  - CosTransformation
+  - StandardScalerTransformation
+  parameters:
+  - {}
+  - mean: -0.02073768103175133
+    std: 0.6826935173950356
+- column: medinc
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - latitude
+  - averooms
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: california_housing
+domain: Real Estate / Economics

@@ -1,0 +1,32 @@
+level: 4
+transformations:
+- column: freeswap
+  operators:
+  - IndicatorMeanTransformation
+  - TanhTransformation
+  parameters:
+  - threshold: 1327714.7309033833
+  - {}
+- column: freemem
+  operators:
+  - PiecewiseLogTransformation
+  - CosTransformation
+  parameters:
+  - {}
+  - {}
+- column: usr
+  operators:
+  - AbsTransformation
+  parameters:
+  - {}
+- column: wchar
+  operators:
+  - SubtractInteractionTransformation
+  source_columns:
+  - exec
+  - lread
+  interaction: subtract
+  parameters:
+  - {}
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

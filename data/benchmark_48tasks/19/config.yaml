@@ -1,0 +1,15 @@
+level: 1
+transformations:
+- column: avebedrms
+  operators:
+  - StandardScalerTransformation
+  parameters:
+  - mean: 1.0975329859706593
+    std: 0.5516023355732369
+- column: medinc
+  operators:
+  - SigmoidTransformation
+  parameters:
+  - {}
+source_dataset: california_housing
+domain: Real Estate / Economics

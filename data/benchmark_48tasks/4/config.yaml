@@ -1,0 +1,32 @@
+level: 4
+transformations:
+- column: angle
+  operators:
+  - PiecewiseLogTransformation
+  - SigmoidTransformation
+  parameters:
+  - {}
+  - {}
+- column: thickness
+  operators:
+  - CosTransformation
+  - SquareTransformation
+  parameters:
+  - {}
+  - {}
+- column: length
+  operators:
+  - SigmoidTransformation
+  parameters:
+  - {}
+- column: pressure
+  operators:
+  - AddInteractionTransformation
+  source_columns:
+  - velocity
+  - frequency
+  interaction: add
+  parameters:
+  - {}
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

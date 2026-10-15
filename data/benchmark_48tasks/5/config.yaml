@@ -1,0 +1,33 @@
+level: 5
+transformations:
+- column: thickness
+  operators:
+  - IndicatorMeanTransformation
+  - Log1pTransformation
+  - AbsTransformation
+  parameters:
+  - threshold: 0.011280533607414447
+  - {}
+  - {}
+- column: angle
+  operators:
+  - AddInteractionTransformation
+  - TanhTransformation
+  source_columns:
+  - frequency
+  - velocity
+  interaction: add
+  parameters:
+  - {}
+  - {}
+- column: pressure
+  operators:
+  - MultiplyInteractionTransformation
+  source_columns:
+  - length
+  - velocity
+  interaction: multiply
+  parameters:
+  - {}
+source_dataset: airfoil_self_noise
+domain: Aeronautics / Fluid Acoustics

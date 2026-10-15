@@ -1,0 +1,26 @@
+level: 2
+transformations:
+- column: sread
+  operators:
+  - MinMaxScalerTransformation
+  - IndicatorMeanTransformation
+  parameters:
+  - min: 6.0
+    ptp: 2497.0
+  - threshold: 0.08133478346321131
+- column: rchar
+  operators:
+  - InverseTransformation
+  - AbsTransformation
+  parameters:
+  - {}
+  - {}
+- column: usr
+  operators:
+  - SquareRootTransformation
+  - CubeRootTransformation
+  parameters:
+  - {}
+  - {}
+source_dataset: cpu_small
+domain: Computer Systems / Telemetry

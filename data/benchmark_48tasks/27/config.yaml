@@ -1,0 +1,30 @@
+level: 3
+transformations:
+- column: superplasticizer
+  operators:
+  - StandardScalerTransformation
+  parameters:
+  - mean: 6.191925104022191
+    std: 6.083577429989618
+- column: water
+  operators:
+  - StandardScalerTransformation
+  parameters:
+  - mean: 181.82531206657418
+    std: 21.08455764507445
+- column: coarse_aggregate
+  operators:
+  - SigmoidTransformation
+  parameters:
+  - {}
+- column: fly_ash
+  operators:
+  - DivideInteractionTransformation
+  source_columns:
+  - blast_furnace_slag
+  - age
+  interaction: divide
+  parameters:
+  - {}
+source_dataset: concrete_strength
+domain: Civil Engineering / Materials Science
