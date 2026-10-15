@@ -1,19 +1,25 @@
 \begin{table*}[t]
 \centering
-\caption{Multi-Domain Benchmark Evaluation on Gemini 3 Flash Across 8 Real-World Datasets.}
+\caption{Multi-Domain Benchmark Evaluation Across 8 Real-World Datasets ($N=48$ Tasks, 6 Complexity Classes per Domain). We compare Gemini 3 Flash and Claude 3.5 Sonnet on Task Submissions, Conditional Transformed Accuracy ($\text{Acc}_{\text{cond}}$), and Penalized Transformed Accuracy ($\text{Acc}_{\text{pen}}$).}
 \label{tab:domain_breakdown}
-\begin{tabular}{llccccc}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llc ccc ccc}
 \toprule
-\textbf{Domain} & \textbf{Source Datasets} & \textbf{Tasks} & \textbf{Submissions} & \textbf{Transformed Acc.} & \textbf{Functional Acc.} & \textbf{Operator F1} \\
+\multirow{2}{*}{\textbf{Domain}} & \multirow{2}{*}{\textbf{Source Dataset}} & \multirow{2}{*}{\textbf{Tasks}} & \multicolumn{3}{c}{\textbf{Gemini 3 Flash (Google)}} & \multicolumn{3}{c}{\textbf{Claude 3.5 Sonnet (Anthropic)}} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9}
+ & & & \textbf{Sub.} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} & \textbf{Sub.} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} \\
 \midrule
-Aeronautics / Fluid Acoustics & airfoil\_self\_noise & 3 & 2/3 & 1.000 & 1.000 & 1.000 \\
-Biomedical / Clinical Medicine & diabetes & 3 & 1/3 & 1.000 & 1.000 & 1.000 \\
-Civil Engineering / Materials Science & concrete\_strength & 3 & 2/3 & 1.000 & 1.000 & 0.900 \\
-Computer Systems / Telemetry & cpu\_small & 3 & 1/3 & 1.000 & 1.000 & 0.500 \\
-Food Chemistry / Agriculture & wine\_quality & 3 & 3/3 & 0.833 & 0.952 & 0.933 \\
-Oncology / Pathology & breast\_cancer & 3 & 2/3 & 1.000 & 1.000 & 0.864 \\
-Real Estate / Economics & california\_housing & 3 & 2/3 & 0.750 & 0.889 & 0.682 \\
-Signal Processing / Security & banknote\_authentication & 3 & 0/3 & -- & -- & -- \\
+Aeronautics / Fluid Acoustics & \texttt{airfoil\_self\_noise} & 6 & 1/6 & 1.000 & 0.167 & 4/6 & 0.792 & 0.528 \\
+Biomedical / Clinical Medicine & \texttt{diabetes} & 6 & 3/6 & 0.917 & 0.458 & 4/6 & 0.688 & 0.458 \\
+Civil Engineering / Materials Science & \texttt{concrete\_strength} & 6 & 4/6 & 0.771 & 0.514 & 5/6 & 0.950 & 0.792 \\
+Computer Systems / Telemetry & \texttt{cpu\_small} & 6 & 5/6 & 0.717 & 0.597 & 4/6 & 0.833 & 0.556 \\
+Food Chemistry / Agriculture & \texttt{wine\_quality} & 6 & 2/6 & 1.000 & 0.333 & 3/6 & 1.000 & 0.500 \\
+Oncology / Pathology & \texttt{breast\_cancer} & 6 & 3/6 & 0.833 & 0.417 & 5/6 & 0.767 & 0.639 \\
+Real Estate / Economics & \texttt{california\_housing} & 6 & 3/6 & 0.889 & 0.444 & 5/6 & 0.550 & 0.458 \\
+Signal Processing / Security & \texttt{banknote\_authentication} & 6 & 3/6 & 0.889 & 0.444 & 4/6 & 1.000 & 0.667 \\
+\midrule
+\textbf{Total / Macro Average} & \textbf{8 Real-World Datasets} & \textbf{48} & \textbf{24/48} & \textbf{0.844} & \textbf{0.422} & \textbf{34/48} & \textbf{0.811} & \textbf{0.575} \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
