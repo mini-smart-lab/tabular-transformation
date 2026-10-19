@@ -24,6 +24,8 @@ class BudgetManager:
         self.input_tokens = 0
         self.output_tokens = 0
         self.tool_calls = 0
+        self.python_calls = 0
+        self.image_calls = 0
         self.execution_time_seconds = 0.0
         self.cpu_time_seconds = 0.0
 
@@ -39,8 +41,12 @@ class BudgetManager:
         self.input_tokens += max(0, input_tokens)
         self.output_tokens += max(0, output_tokens)
 
-    def record_tool_call(self) -> None:
+    def record_tool_call(self, tool_name: str = "") -> None:
         self.tool_calls += 1
+        if tool_name == "run_python":
+            self.python_calls += 1
+        elif tool_name == "read_image":
+            self.image_calls += 1
 
     def record_execution_time(self, seconds: float) -> None:
         self.execution_time_seconds += max(0.0, seconds)
@@ -95,6 +101,8 @@ class BudgetManager:
             "output_tokens": self.output_tokens,
             "total_tokens": self.total_tokens,
             "tool_calls": self.tool_calls,
+            "python_calls": self.python_calls,
+            "image_calls": self.image_calls,
             "execution_time_seconds": self.execution_time_seconds,
             "cpu_time_seconds": self.cpu_time_seconds,
             "wall_time_seconds": self.wall_time_seconds,

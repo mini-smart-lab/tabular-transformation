@@ -1,0 +1,18 @@
+\begin{table*}[t]
+\centering
+\caption{Empirical Resource Telemetry and Episode Termination Breakdown across Evaluated LLM Agent Architectures. We report Tasks ($N$), Submission Rate, Disaggregated Termination Breakdown (Submitted, Token Budget Exceeded, Tool Call Budget Exceeded, Premature Non-Submission Stop), Cumulative Total Tokens, Input Tokens, Output Tokens (including thinking traces), Total Tool Invocations, Python REPL Executions, Visual Chart Invocations ($\texttt{read\_image}$), Episode Wall Time, and Sandboxed Python Execution Time.}
+\label{tab:telemetry_breakdown}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l c c cccc ccc ccc cc}
+\toprule
+\multirow{2}{*}{\textbf{Model Agent}} & \multirow{2}{*}{\textbf{$N$}} & \textbf{Sub.} & \multicolumn{4}{c}{\textbf{Episode Termination Breakdown}} & \multicolumn{3}{c}{\textbf{Mean Cumulative Tokens}} & \multicolumn{3}{c}{\textbf{Mean Tool Invocations}} & \multicolumn{2}{c}{\textbf{Mean Time (s)}} \\
+\cmidrule(lr){4-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-15}
+ & & \textbf{Rate} & \textbf{Sub.} & \textbf{Tok. Ex.} & \textbf{Call Ex.} & \textbf{Stop} & \textbf{Total} & \textbf{Input} & \textbf{Output} & \textbf{Total} & \textbf{\texttt{python}} & \textbf{\texttt{image}} & \textbf{Wall} & \textbf{Exec} \\
+\midrule
+Claude 3.5 Sonnet & 48 & 70.8\% & 34 & 11 & 3 & 0 & 133,117 & 127,247 & 5,871 & 13.9 & 12.5 & 0.4 & 85.2 & 20.4 \\
+Gemini 2.0 Flash & 48 & 50.0\% & 24 & 6 & 4 & 14 & 122,121 & 112,665 & 9,457 & 13.4 & 12.0 & 0.6 & 80.9 & 26.6 \\
+GPT-4o mini & 48 & 100.0\% & 48 & 0 & 0 & 0 & 65,171 & 62,060 & 3,111 & 12.6 & 11.6 & 0.0 & 58.1 & 23.0 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

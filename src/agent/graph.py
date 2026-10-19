@@ -88,15 +88,28 @@ class DiscoveryGraph:
         budget_status = self.budget.check()
         if budget_status.exhausted:
             return self._budget_update(budget_status.reason)
-        try:
-            response = self.model.invoke([self.system_message, *state["messages"]])
-        except Exception as exc:
-            self.logger.record("model_error", error_type=type(exc).__name__, error=str(exc))
-            return {
-                "status": "failed",
-                "termination_reason": f"model_error:{type(exc).__name__}",
-                **self._counter_update(),
-            }
+        max_empty_retries = 3
+        response = None
+        for attempt in range(max_empty_retries):
+            try:
+                response = self.model.invoke([self.system_message, *state["messages"]])
+            except Exception as exc:
+                self.logger.record("model_error", error_type=type(exc).__name__, error=str(exc))
+                return {
+                    "status": "failed",
+                    "termination_reason": f"model_error:{type(exc).__name__}",
+                    **self._counter_update(),
+                }
+            # Guard against transient empty responses from proxy relays
+            has_calls = bool(getattr(response, "tool_calls", None))
+            is_empty = not response.content or response.content == "[Empty message from proxy endpoint]"
+            if is_empty and not has_calls and attempt < max_empty_retries - 1:
+                import time
+                self.logger.record("model_retry_empty", attempt=attempt, provider_model=self.provider_model)
+                time.sleep(1.0 * (attempt + 1))
+                continue
+            break
+        assert response is not None
         input_tokens, output_tokens = extract_token_usage(response)
         self.budget.record_llm_usage(input_tokens, output_tokens)
         turn = state["turn_index"] + 1
@@ -131,7 +144,7 @@ class DiscoveryGraph:
             if not isinstance(args, dict):
                 args = {}
             call_id = call.get("id") or name or "unknown"
-            self.budget.record_tool_call()
+            self.budget.record_tool_call(name)
             try:
                 if self.budget.tool_calls > self.budget.config.max_tool_calls:
                     result: Any = {"status": "error", "stderr": "budget exhausted"}

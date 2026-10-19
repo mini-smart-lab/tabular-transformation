@@ -27,6 +27,7 @@ def aggregate_results(result_directory: Path | str, output_csv: Path | str) -> p
             "exact_sequence_accuracy": operators.get("exact_sequence_accuracy"),
             "input_tokens": budget.get("input_tokens"), "output_tokens": budget.get("output_tokens"),
             "total_tokens": budget.get("total_tokens"), "tool_calls": budget.get("tool_calls"),
+            "python_calls": budget.get("python_calls"), "image_calls": budget.get("image_calls"),
             "execution_time_seconds": budget.get("execution_time_seconds"),
             "cpu_time_seconds": budget.get("cpu_time_seconds"),
             "wall_time_seconds": budget.get("wall_time_seconds"),
