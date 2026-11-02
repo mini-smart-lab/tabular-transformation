@@ -19,17 +19,7 @@ archive/
 comment.cut
 
 # Large archives and binary docs in paper
-paper/*.zip
-paper/*.docx
-paper/*.doc
-paper/*.pdf
-!paper/iciit/draft/main.pdf
-paper/iciit/*.zip
-paper/iciit/*.docx
-paper/iciit/*.doc
-paper/iciit/latex_template/
-paper/draft/
-paper/paper/
+paper/
 
 # Cache and environment
 .pytest_cache/
@@ -38,4 +28,4 @@ idea.txt
 .env
 task.md
 note.txt
-data/benchmark_24tasks/
+data/benchmark_24tasks/
