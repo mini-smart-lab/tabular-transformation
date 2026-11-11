@@ -111,6 +111,8 @@ def _build_kaggle_proxy(config: ModelConfig, api_key: str) -> Any:
     )
     if config.temperature is not None and "claude" not in config.model.lower():
         kwargs["temperature"] = config.temperature
+    if config.seed is not None:
+        kwargs["seed"] = config.seed
     return ChatOpenAI(**kwargs)
 
 

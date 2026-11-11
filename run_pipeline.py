@@ -217,7 +217,7 @@ def main() -> int:
             })
 
     model_config_raw = yaml.safe_load(args.model_config.read_text(encoding="utf-8")) or {}
-    if args.seed is not None and "seed" not in model_config_raw:
+    if args.seed is not None:
         model_config_raw["seed"] = args.seed
     model_config = ModelConfig.model_validate(model_config_raw)
     model_config = resolve_model_config(model_config)

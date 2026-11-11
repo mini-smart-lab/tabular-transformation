@@ -4,6 +4,8 @@ artifacts/
 results/
 logs/
 pipeline_runs/
+pipeline_runs_revision/*
+!pipeline_runs_revision/*.csv
 archive/
 
 # LaTeX build artifacts
@@ -18,7 +20,7 @@ archive/
 *.synctex.gz
 comment.cut
 
-# Large archives and binary docs in paper
+# Paper directory (kept locally)
 paper/
 
 # Cache and environment
