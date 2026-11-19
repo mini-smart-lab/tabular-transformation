@@ -1,0 +1,27 @@
+\begin{table*}[!b]
+\centering
+\caption{Multi-Domain Benchmark Evaluation Across 8 Real-World Datasets ($N=48$ Tasks, $n=6$ Complexity Classes per Domain, reference seed $\text{seed}=42$). We report Task Submissions, Conditional Transformed Accuracy ($\text{Acc}_{\text{cond}}$), and Penalized Transformed Accuracy ($\text{Acc}_{\text{pen}}$) across Claude 3.5 Sonnet, Gemini 2.0 Flash, and GPT-4o mini. Across models, Claude consistently leads in penalized accuracy on feature-dense domains, while Gemini achieves high conditional precision when submitting.}
+\label{tab:domain_breakdown}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llc ccc ccc ccc}
+\toprule
+\multirow{2}{*}{\textbf{Domain}} & \multirow{2}{*}{\textbf{Source Dataset}} & \multirow{2}{*}{\textbf{Tasks}} & \multicolumn{3}{c}{\textbf{Claude 3.5 Sonnet (Anthropic)}} & \multicolumn{3}{c}{\textbf{Gemini 2.0 Flash (Google)}} & \multicolumn{3}{c}{\textbf{GPT-4o mini (OpenAI)}} \\
+\cmidrule(lr){4-6} \cmidrule(lr){7-9} \cmidrule(lr){10-12}
+ & & & \textbf{Sub.} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} & \textbf{Sub.} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} & \textbf{Sub.} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} \\
+\midrule
+Aeronautics / Fluid Acoustics & \texttt{airfoil\_self\_noise} & 6 & 4/6 & 0.792 & 0.528 & 1/6 & 1.000 & 0.167 & 6/6 & 0.556 & 0.556 \\
+Biomedical / Clinical Medicine & \texttt{diabetes} & 6 & 4/6 & 0.688 & 0.458 & 3/6 & 0.917 & 0.458 & 6/6 & 0.389 & 0.389 \\
+Civil Engineering / Materials Science & \texttt{concrete\_strength} & 6 & 5/6 & 0.950 & 0.792 & 4/6 & 0.771 & 0.514 & 6/6 & 0.611 & 0.611 \\
+Computer Systems / Telemetry & \texttt{cpu\_small} & 6 & 4/6 & 0.833 & 0.556 & 5/6 & 0.717 & 0.597 & 6/6 & 0.486 & 0.486 \\
+Food Chemistry / Agriculture & \texttt{wine\_quality} & 6 & 3/6 & 1.000 & 0.500 & 2/6 & 1.000 & 0.333 & 6/6 & 0.556 & 0.556 \\
+Oncology / Pathology & \texttt{breast\_cancer} & 6 & 5/6 & 0.767 & 0.639 & 3/6 & 0.833 & 0.417 & 6/6 & 0.389 & 0.389 \\
+Real Estate / Economics & \texttt{california\_housing} & 6 & 5/6 & 0.550 & 0.458 & 3/6 & 0.889 & 0.444 & 6/6 & 0.236 & 0.236 \\
+Signal Processing / Security & \texttt{banknote\_authentication} & 6 & 4/6 & 1.000 & 0.667 & 3/6 & 0.889 & 0.444 & 6/6 & 0.556 & 0.556 \\
+\midrule
+\textbf{Total / Micro Average}\textsuperscript{a} & \textbf{8 Real-World Datasets} & \textbf{48} & \textbf{34/48} & \textbf{0.811} & \textbf{0.575} & \textbf{24/48} & \textbf{0.844} & \textbf{0.422} & \textbf{48/48} & \textbf{0.472} & \textbf{0.472} \\
+\bottomrule
+\end{tabular}%
+}
+\par\vspace{2pt}
+{\footnotesize \textsuperscript{a} Conditional accuracy values in the bottom row represent task-weighted micro-averages over all submitted tasks ($27.583/34 = 0.811$ for Claude, $20.25/24 = 0.844$ for Gemini, $22.667/48 = 0.472$ for GPT-4o mini; unweighted domain macro-averages are $0.823$, $0.877$, and $0.472$). Penalized micro- and macro-averages coincide identically as all 8 domains contain exactly 6 tasks. For reference, across the full 48-task benchmark ($n=6$ tasks per domain spanning Classes C0--C5), the non-agentic Symbolic Enumeration baseline achieves an overall transformed accuracy of $0.653$ (see Table~4 for per-class breakdowns).}
+\end{table*}

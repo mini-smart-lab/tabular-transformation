@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\centering
+\caption{Summary Comparison across the Benchmark Suite ($N=48$ Tasks across 8 Domains and 6 Complexity Classes). For LLM agents, we report $\text{Mean} \pm \text{Std}$ over $S=2$ evaluation seeds ($\text{seed} \in \{42,43\}$ at $T=0.0$, capturing two-run execution trajectory stability over the fixed 48-task suite; deterministic single run for non-LLM Symbolic Enumeration): Submission Rate, Conditional Transformed Accuracy ($\text{Acc}_{\text{cond}}$), Penalized Transformed Accuracy ($\text{Acc}_{\text{pen}}$), Functional Accuracy (Penalized with Conditional in parentheses), and Conditional Operator F1. Best overall is bolded; best LLM is underlined. Detailed breakdowns appear in Appendix~\ref{app:detailed_breakdowns} (Tables~\ref{tab:class_breakdown}--\ref{tab:domain_breakdown}).}
+\label{tab:main_model_comparison}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+\textbf{Model} & \textbf{Paradigm} & \textbf{Sub. Rate} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} & \textbf{Func. (Pen / Cond)} & \textbf{Op. F1 (Cond)} \\
+\midrule
+Claude 3.5 Sonnet (Anthropic) & Frontier Agent & $68.8 \pm 2.9\%$ & \textbf{\underline{$0.829 \pm 0.025$}} & \underline{$0.569 \pm 0.007$} & $0.641 \pm 0.037$ ($0.932$) & $0.736 \pm 0.021$ \\
+Gemini 2.0 Flash (Google) & Frontier Agent & $50.0 \pm 0.0\%$ & $0.809 \pm 0.049$ & $0.405 \pm 0.025$ & $0.453 \pm 0.021$ ($0.906$) & \underline{$0.811 \pm 0.060$} \\
+GPT-4o mini (OpenAI) & Lightweight Agent & \textbf{\underline{$100.0 \pm 0.0\%$}} & $0.485 \pm 0.018$ & $0.485 \pm 0.018$ & \underline{$0.799 \pm 0.011$ ($0.799$)} & $0.445 \pm 0.038$ \\
+Symbolic Enumeration & Exhaustive Search Lower Bound (Depth-3) & \textbf{100.0\%} & 0.653 & \textbf{0.653} & \textbf{0.876 (0.876)} & \textbf{0.872} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

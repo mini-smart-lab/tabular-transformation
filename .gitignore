@@ -20,8 +20,20 @@ archive/
 *.synctex.gz
 comment.cut
 
-# Paper directory (kept locally)
-paper/
+# Paper archives, templates, and private review files
+paper/*.zip
+paper/*.docx
+paper/*.doc
+paper/*.pdf
+paper/draft/
+paper/paper/
+paper/tables/
+paper/iciit/*.zip
+paper/iciit/*.docx
+paper/iciit/*.doc
+paper/iciit/latex_template/
+paper/iciit/draft/*Review*.pdf
+paper/iciit/draft/deep_review_by_argon.txt
 
 # Cache and environment
 .pytest_cache/

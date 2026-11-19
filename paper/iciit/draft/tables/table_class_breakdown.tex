@@ -1,0 +1,21 @@
+\begin{table*}[!b]
+\centering
+\caption{Per-Class Penalized Transformed Column Accuracy ($\text{Acc}_{\text{pen}}$, reported as $\text{Mean} \pm \text{Std}$ over $S=2$ evaluation seeds $\text{seed} \in \{42,43\}$ capturing execution trajectory stability at $T=0.0$) across Structural Complexity Classes C0--C5 ($N=48$ Tasks total, $n=8$ Tasks per Class). Best overall performance in each class is bolded; best among LLM agents is underlined.}
+\label{tab:class_breakdown}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{ll cccccc}
+\toprule
+\multirow{2}{*}{\textbf{Model}} & \multirow{2}{*}{\textbf{Paradigm}} & \multicolumn{6}{c}{\textbf{Penalized Transformed Accuracy by Complexity Class ($n=8$ per class)\textsuperscript{a}}} \\
+\cmidrule(lr){3-8}
+ & & \textbf{C0 (Atomic)} & \textbf{C1 (Unary)} & \textbf{C2 (Chain)} & \textbf{C3 (Interact.)} & \textbf{C4 (Piecewise)} & \textbf{C5 (Hybrid)} \\
+\midrule
+Claude 3.5 Sonnet (Anthropic) & Frontier Agent & \textbf{\underline{$0.875 \pm 0.000$}} & \textbf{\underline{$0.938 \pm 0.088$}} & $0.312 \pm 0.147$ & \underline{$0.438 \pm 0.088$} & \underline{$0.500 \pm 0.044$} & \underline{$0.354 \pm 0.059$} \\
+Gemini 2.0 Flash (Google) & Frontier Agent & $0.750 \pm 0.000$ & $0.438 \pm 0.088$ & $0.229 \pm 0.206$ & $0.406 \pm 0.088$ & $0.344 \pm 0.044$ & $0.260 \pm 0.103$ \\
+GPT-4o mini (OpenAI) & Lightweight Agent & $0.812 \pm 0.088$ & $0.750 \pm 0.088$ & \underline{$0.417 \pm 0.059$} & $0.391 \pm 0.066$ & $0.312 \pm 0.133$ & $0.229 \pm 0.059$ \\
+Symbolic Enumeration & Exhaustive Search Lower Bound & 0.750 & 0.750 & \textbf{0.667} & \textbf{0.562} & \textbf{0.812} & \textbf{0.375} \\
+\bottomrule
+\end{tabular}%
+}
+\par\vspace{2pt}
+{\footnotesize \textsuperscript{a} Each complexity class C0--C5 contains $n=8$ tasks (one per domain), evaluated across $S=2$ seeds ($\text{seed} \in \{42,43\}$) at $T=0.0$ for all LLM agents (deterministic single run for Symbolic Enumeration) to quantify trajectory stability over the fixed 48-task suite. Because per-class results are based on 8 tasks each, fine-grained class differences should be interpreted with caution.}
+\end{table*}

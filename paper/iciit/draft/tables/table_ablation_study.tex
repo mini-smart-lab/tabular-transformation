@@ -1,0 +1,24 @@
+\begin{table*}[t]
+\centering
+\caption{Multi-Model Ablation Study across Claude 3.5 Sonnet, Gemini 2.0 Flash, and GPT-4o mini ($N=48$, reference $\text{seed}=42$ for controlled within-seed comparison). We report Submissions, Conditional Transformed Accuracy ($\text{Acc}_{\text{cond}}$), Penalized Transformed Accuracy ($\text{Acc}_{\text{pen}}$), Functional Accuracy (Conditional with Penalized in parentheses), Operator F1, and Column Exact Sequence Accuracy conditioned on submitted tasks. In the No Tools condition, non-zero transformed accuracy (0.024--0.050) is a numerical artifact of identity-preserving operations ($f(x) \equiv x$) on discrete features submitted via fallback \texttt{df.copy()}, while both self-reported and AST-extracted operators yield $\widehat{\mathcal{O}} = \emptyset$ ($\text{Op.~F1} = 0.000$).}
+\label{tab:ablation_study}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llcccccc}
+\toprule
+\textbf{Model} & \textbf{Ablation Condition} & \textbf{Submissions} & \textbf{Trans. (Cond)} & \textbf{Trans. (Pen)} & \textbf{Func. (Cond / Pen)} & \textbf{Op. F1 (Cond)} & \textbf{Seq. (Cond)} \\
+\midrule
+\textbf{Claude 3.5 Sonnet} & Direct Symbolic Gen. (No Tools) & 48/48 (100.0\%) & 0.024 & 0.024 & 0.679 (0.679) & 0.000 & 0.000 \\
+ & Standard Interactive Discovery (Full) & 34/48 (70.8\%) & 0.811 & 0.575 & 0.942 (0.667) & 0.721 & 0.580 \\
+ & Oracle Operators Revealed & 48/48 (100.0\%) & 0.943 & 0.943 & 0.974 (0.974) & 1.000 & 0.993 \\
+\midrule
+\textbf{Gemini 2.0 Flash} & Direct Symbolic Gen. (No Tools) & 15/48 (31.2\%) & 0.050 & 0.016 & 0.635 (0.198) & 0.000 & 0.000 \\
+ & Standard Interactive Discovery (Full) & 24/48 (50.0\%) & 0.844 & 0.422 & 0.936 (0.468) & 0.853 & 0.736 \\
+ & Oracle Operators Revealed & 37/48 (77.1\%) & 0.989 & 0.762 & 0.976 (0.752) & 1.000 & 1.000 \\
+\midrule
+\textbf{GPT-4o mini} & Direct Symbolic Gen. (No Tools) & 48/48 (100.0\%) & 0.024 & 0.024 & 0.679 (0.679) & 0.000 & 0.000 \\
+ & Standard Interactive Discovery (Full) & 48/48 (100.0\%) & 0.472 & 0.472 & 0.807 (0.807) & 0.418 & 0.322 \\
+ & Oracle Operators Revealed & 48/48 (100.0\%) & 0.661 & 0.661 & 0.868 (0.868) & 0.993 & 0.977 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}

@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\centering
+\caption{Empirical Resource Telemetry and Episode Termination Breakdown across LLM Agent Architectures ($N=48$, reference $\text{seed}=42$). We report Tasks ($N$), Submission Rate, Termination Breakdown (Submitted, Token Exceeded, Call Exceeded, Premature Stop), Mean Cumulative Tokens (Total, Input, Output including thinking traces), Mean Tool Invocations (Total, $\texttt{run\_python}$, $\texttt{read\_image}$)\textsuperscript{a}, and Mean Episode Wall / Sandbox Execution Time.}
+\label{tab:telemetry_breakdown}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l c c cccc ccc ccc cc}
+\toprule
+\multirow{2}{*}{\textbf{Model Agent}} & \multirow{2}{*}{\textbf{$N$}} & \textbf{Sub.} & \multicolumn{4}{c}{\textbf{Episode Termination Breakdown}} & \multicolumn{3}{c}{\textbf{Mean Cumulative Tokens}} & \multicolumn{3}{c}{\textbf{Mean Tool Invocations}} & \multicolumn{2}{c}{\textbf{Mean Time (s)}} \\
+\cmidrule(lr){4-7} \cmidrule(lr){8-10} \cmidrule(lr){11-13} \cmidrule(lr){14-15}
+ & & \textbf{Rate} & \textbf{Sub.} & \textbf{Tok. Ex.} & \textbf{Call Ex.} & \textbf{Stop} & \textbf{Total} & \textbf{Input} & \textbf{Output} & \textbf{Total\textsuperscript{a}} & \textbf{\texttt{python}} & \textbf{\texttt{image}} & \textbf{Wall} & \textbf{Exec} \\
+\midrule
+Claude 3.5 Sonnet & 48 & 70.8\% & 34 & 11 & 3 & 0 & 133,117 & 127,247 & 5,871 & 13.9 & 12.5 & 0.4 & 85.2 & 20.4 \\
+Gemini 2.0 Flash & 48 & 50.0\% & 24 & 6 & 4 & 14 & 122,121 & 112,665 & 9,457 & 13.4 & 12.0 & 0.6 & 80.9 & 26.6 \\
+GPT-4o mini & 48 & 100.0\% & 48 & 0 & 0 & 0 & 65,171 & 62,060 & 3,111 & 12.6 & 11.6 & 0.0 & 58.1 & 23.0 \\
+\bottomrule
+\end{tabular}%
+}
+\par\vspace{2pt}
+{\footnotesize \textsuperscript{a} The `Total' tool invocation column reflects the exact mean of all executed tool actions across all 48 episodes, which accounts for exploratory $\texttt{run\_python}$, visual $\texttt{read\_image}$, and all initial and retried/rejected invocations of $\texttt{submit\_solution}$ (averaging 0.85 calls/episode [41 total calls] for Claude, 0.52 calls/episode [25 calls] for Gemini, and 1.06 calls/episode [51 calls] for GPT-4o mini), accounting for the slight offset relative to summing $\texttt{python} + \texttt{image} + \text{accepted submissions}/48$.}
+\end{table*}
